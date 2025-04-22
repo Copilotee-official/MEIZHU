@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>四阶段语音参数调整工具</title>
+    <style>
+        :root {
+            --primary-color: #4a6fa5;
+            --secondary-color: #6a8cbc;
+            --accent-color: #e67e22;
+            --light-bg: #f5f9ff;
+            --dark-bg: #2c3e50;
+            --text-color: #333;
+            --light-text: #fff;
+            --border-radius: 8px;
+            --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--light-bg);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+
+        .sub-title {
+            color: var(--secondary-color);
+            font-weight: normal;
+        }
+
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--primary-color);
+        }
+
+        .tab {
+            padding: 10px 20px;
+            background: #f0f0f0;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            margin-right: 5px;
+            transition: background 0.3s;
+        }
+
+        .tab.active {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .stage-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stage-card {
+            flex: 1;
+            min-width: 250px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            background: white;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+
+        .stage-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+
+        .stage-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .stage-title {
+            color: var(--primary-color);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .stage-toggle {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .param-group {
+            margin-bottom: 15px;
+        }
+
+        .param-label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: var(--secondary-color);
+        }
+
+        .param-input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-bottom: 5px;
+        }
+
+        .range-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .param-range {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .range-value {
+            width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .text-area {
+            width: 100%;
+            min-height: 100px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            resize: vertical;
+        }
+
+        .text-examples {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .example-button {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .example-button:hover {
+            background: var(--primary-color);
+        }
+
+        .batch-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f0f4f8;
+            border-radius: var(--border-radius);
+        }
+
+        .batch-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .batch-file {
+            background: var(--secondary-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            display: inline-block;
+        }
+
+        .batch-file input {
+            display: none;
+        }
+
+        .batch-button {
+            background: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .batch-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .batch-list {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            background: white;
+        }
+
+        .batch-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .batch-item:last-child {
+            border-bottom: none;
+        }
+
+        .copy-button {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            margin-left: 10px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .close-modal {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .modal-body {
+            margin-bottom: 20px;
+        }
+
+        #outputConsole {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 10px;
+            font-family: monospace;
+            height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .console-message {
+            margin-bottom: 5px;
+            padding: 5px;
+        }
+
+        .info {
+            color: var(--primary-color);
+        }
+
+        .success {
+            color: #2ecc71;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+            margin-right: 10px;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .action-button {
+            flex: 1;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .action-button.secondary {
+            background: var(--secondary-color);
+        }
+
+        .action-button.accent {
+            background: var(--accent-color);
+        }
+
+        .emotion-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            margin-top: 5px;
+        }
+
+        .emotion-button {
+            background: #f0f0f0;
+            border: 1px solid #ddd;
+            padding: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .emotion-button.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .stages-preview {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f4f8;
+            border-radius: var(--border-radius);
+        }
+
+        .preview-title {
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .stage-preview-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            background: white;
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .preview-stage-name {
+            font-weight: bold;
+            color: var(--secondary-color);
+            margin-bottom: 5px;
+        }
+
+        .preview-params {
+            font-family: monospace;
+            background: #f5f5f5;
+            padding: 5px;
+            border-radius: 3px;
+            margin-bottom: 5px;
+        }
+
+        .preview-text {
+            font-style: italic;
+            color: #555;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .stage-container {
+                flex-direction: column;
+            }
+            
+            .batch-controls {
+                flex-direction: column;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>四阶段语音参数调整工具</h1>
+            <p class="sub-title">便于直观调整四个阶段参数并批量处理音频</p>
+        </header>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="parameters">参数调整</button>
+            <button class="tab" data-tab="batch">批量处理</button>
+            <button class="tab" data-tab="preview">预览</button>
+        </div>
+
+        <div class="tab-content active" id="parameters">
+            <div class="stage-container">
+                <!-- 开场阶段 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <h3 class="stage-title">开场阶段</h3>
+                        <button class="stage-toggle" onclick="toggleStageDetails(0)">展开</button>
+                    </div>
+                    <div class="stage-details">
+                        <div class="param-group">
+                            <label class="param-label">语速 (Speed)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage1_speed" min="0.5" max="2" step="0.05" value="0.85">
+                                <span class="range-value" id="stage1_speed_value">0.85</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音量 (Volume)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage1_vol" min="0.5" max="2" step="0.05" value="0.9">
+                                <span class="range-value" id="stage1_vol_value">0.9</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音调 (Pitch)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage1_pitch" min="-10" max="10" step="0.5" value="1.0">
+                                <span class="range-value" id="stage1_pitch_value">1.0</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">情感 (Emotion)</label>
+                            <div class="emotion-grid">
+                                <button class="emotion-button selected" data-emotion="happy" data-stage="1">欢快</button>
+                                <button class="emotion-button" data-emotion="sad" data-stage="1">悲伤</button>
+                                <button class="emotion-button" data-emotion="angry" data-stage="1">愤怒</button>
+                                <button class="emotion-button" data-emotion="neutral" data-stage="1">中性</button>
+                                <button class="emotion-button" data-emotion="surprise" data-stage="1">惊讶</button>
+                                <button class="emotion-button" data-emotion="fear" data-stage="1">恐惧</button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="text-area" id="stage1_text" placeholder="输入开场阶段的文本...">嗯~<#0.4#>你来啦<#0.3#>我等你好久了呢~</textarea>
+                    <div class="text-examples">
+                        <button class="example-button" onclick="setExampleText(1, 1)">示例1</button>
+                        <button class="example-button" onclick="setExampleText(1, 2)">示例2</button>
+                        <button class="example-button" onclick="setExampleText(1, 3)">示例3</button>
+                    </div>
+                </div>
+
+                <!-- 升温阶段 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <h3 class="stage-title">升温阶段</h3>
+                        <button class="stage-toggle" onclick="toggleStageDetails(1)">展开</button>
+                    </div>
+                    <div class="stage-details">
+                        <div class="param-group">
+                            <label class="param-label">语速 (Speed)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage2_speed" min="0.5" max="2" step="0.05" value="1.0">
+                                <span class="range-value" id="stage2_speed_value">1.0</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音量 (Volume)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage2_vol" min="0.5" max="2" step="0.05" value="1.1">
+                                <span class="range-value" id="stage2_vol_value">1.1</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音调 (Pitch)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage2_pitch" min="-10" max="10" step="0.5" value="1.5">
+                                <span class="range-value" id="stage2_pitch_value">1.5</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">情感 (Emotion)</label>
+                            <div class="emotion-grid">
+                                <button class="emotion-button" data-emotion="happy" data-stage="2">欢快</button>
+                                <button class="emotion-button" data-emotion="sad" data-stage="2">悲伤</button>
+                                <button class="emotion-button" data-emotion="angry" data-stage="2">愤怒</button>
+                                <button class="emotion-button" data-emotion="neutral" data-stage="2">中性</button>
+                                <button class="emotion-button selected" data-emotion="surprised" data-stage="2">惊讶</button>
+                                <button class="emotion-button" data-emotion="fear" data-stage="2">恐惧</button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="text-area" id="stage2_text" placeholder="输入升温阶段的文本...">嗯哼~<#0.2#>就是那里<#0.2#>啊~好舒服~</textarea>
+                    <div class="text-examples">
+                        <button class="example-button" onclick="setExampleText(2, 1)">示例1</button>
+                        <button class="example-button" onclick="setExampleText(2, 2)">示例2</button>
+                        <button class="example-button" onclick="setExampleText(2, 3)">示例3</button>
+                    </div>
+                </div>
+
+                <!-- 高潮阶段 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <h3 class="stage-title">高潮阶段</h3>
+                        <button class="stage-toggle" onclick="toggleStageDetails(2)">展开</button>
+                    </div>
+                    <div class="stage-details">
+                        <div class="param-group">
+                            <label class="param-label">语速 (Speed)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage3_speed" min="0.5" max="2" step="0.05" value="1.2">
+                                <span class="range-value" id="stage3_speed_value">1.2</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音量 (Volume)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage3_vol" min="0.5" max="2" step="0.05" value="1.3">
+                                <span class="range-value" id="stage3_vol_value">1.3</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音调 (Pitch)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage3_pitch" min="-10" max="10" step="0.5" value="2.0">
+                                <span class="range-value" id="stage3_pitch_value">2.0</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">情感 (Emotion)</label>
+                            <div class="emotion-grid">
+                                <button class="emotion-button" data-emotion="happy" data-stage="3">欢快</button>
+                                <button class="emotion-button" data-emotion="sad" data-stage="3">悲伤</button>
+                                <button class="emotion-button" data-emotion="angry" data-stage="3">愤怒</button>
+                                <button class="emotion-button" data-emotion="neutral" data-stage="3">中性</button>
+                                <button class="emotion-button selected" data-emotion="surprised" data-stage="3">惊讶</button>
+                                <button class="emotion-button" data-emotion="fear" data-stage="3">恐惧</button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="text-area" id="stage3_text" placeholder="输入高潮阶段的文本...">啊<#0.1#>天啊<#0.05#>不行了<#0.1#>太棒了！</textarea>
+                    <div class="text-examples">
+                        <button class="example-button" onclick="setExampleText(3, 1)">示例1</button>
+                        <button class="example-button" onclick="setExampleText(3, 2)">示例2</button>
+                        <button class="example-button" onclick="setExampleText(3, 3)">示例3</button>
+                    </div>
+                </div>
+
+                <!-- 满足阶段 -->
+                <div class="stage-card">
+                    <div class="stage-header">
+                        <h3 class="stage-title">满足阶段</h3>
+                        <button class="stage-toggle" onclick="toggleStageDetails(3)">展开</button>
+                    </div>
+                    <div class="stage-details">
+                        <div class="param-group">
+                            <label class="param-label">语速 (Speed)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage4_speed" min="0.5" max="2" step="0.05" value="0.75">
+                                <span class="range-value" id="stage4_speed_value">0.75</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音量 (Volume)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage4_vol" min="0.5" max="2" step="0.05" value="0.8">
+                                <span class="range-value" id="stage4_vol_value">0.8</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">音调 (Pitch)</label>
+                            <div class="range-container">
+                                <input type="range" class="param-range" id="stage4_pitch" min="-10" max="10" step="0.5" value="0.0">
+                                <span class="range-value" id="stage4_pitch_value">0.0</span>
+                            </div>
+                        </div>
+                        <div class="param-group">
+                            <label class="param-label">情感 (Emotion)</label>
+                            <div class="emotion-grid">
+                                <button class="emotion-button" data-emotion="happy" data-stage="4">欢快</button>
+                                <button class="emotion-button" data-emotion="sad" data-stage="4">悲伤</button>
+                                <button class="emotion-button" data-emotion="angry" data-stage="4">愤怒</button>
+                                <button class="emotion-button selected" data-emotion="neutral" data-stage="4">中性</button>
+                                <button class="emotion-button" data-emotion="surprised" data-stage="4">惊讶</button>
+                                <button class="emotion-button" data-emotion="fear" data-stage="4">恐惧</button>
+                            </div>
+                        </div>
+                    </div>
+                    <textarea class="text-area" id="stage4_text" placeholder="输入满足阶段的文本...">呼~<#0.5#>太舒服了<#0.6#>嗯~<#0.4#>好满足...</textarea>
+                    <div class="text-examples">
+                        <button class="example-button" onclick="setExampleText(4, 1)">示例1</button>
+                        <button class="example-button" onclick="setExampleText(4, 2)">示例2</button>
+                        <button class="example-button" onclick="setExampleText(4, 3)">示例3</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-button" onclick="exportConfig()">导出配置</button>
+                <button class="action-button secondary" onclick="importConfig()">导入配置</button>
+                <button class="action-button accent" onclick="generatePreview()">生成预览</button>
+            </div>
+        </div>
+
+        <div class="tab-content" id="batch">
+            <h2>批量处理音频</h2>
+            <p>上传CSV文件或手动添加文本，批量生成音频文件。</p>
+
+            <div class="batch-controls">
+                <label class="batch-file">
+                    选择CSV文件
+                    <input type="file" id="csvFile" accept=".csv" onchange="handleFileSelect(this)">
+                </label>
+                <button class="batch-button" id="generateButton" onclick="generateBatch()" disabled>开始批量生成</button>
+                <button class="batch-button" onclick="downloadCsv()">下载当前CSV</button>
+                <button class="batch-button secondary" onclick="addManualEntry()">手动添加条目</button>
+            </div>
+
+            <div class="batch-list" id="batchList">
+                <div class="batch-item">请上传CSV文件或手动添加条目...</div>
+            </div>
+
+            <div id="outputConsole">
+                <div class="console-message info">准备就绪，等待操作...</div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="preview">
+            <h2>参数预览</h2>
+            <p>查看当前设置的四个阶段参数与文本。</p>
+
+            <div class="stages-preview" id="stagesPreview">
+                <h3 class="preview-title">当前阶段设置</h3>
+                <!-- 预览内容将动态生成 -->
+            </div>
+
+            <div class="action-buttons">
+                <button class="action-button" onclick="generateSingleAudio(1)">生成开场阶段音频</button>
+                <button class="action-button" onclick="generateSingleAudio(2)">生成升温阶段音频</button>
+                <button class="action-button" onclick="generateSingleAudio(3)">生成高潮阶段音频</button>
+                <button class="action-button" onclick="generateSingleAudio(4)">生成满足阶段音频</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 导入/导出配置对话框 -->
+    <div class="modal" id="configModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">配置</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <textarea id="configText" class="text-area" style="height: 200px;" placeholder="粘贴配置JSON或复制导出的配置..."></textarea>
+            </div>
+            <div class="action-buttons">
+                <button class="action-button" id="configAction" onclick="handleConfigAction()">确认</button>
+                <button class="action-button secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 添加条目对话框 -->
+    <div class="modal" id="entryModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>添加文本条目</h3>
+                <button class="close-modal" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="param-group">
+                    <label class="param-label">阶段</label>
+                    <select class="param-input" id="entryStage">
+                        <option value="1">开场阶段</option>
+                        <option value="2">升温阶段</option>
+                        <option value="3">高潮阶段</option>
+                        <option value="4">满足阶段</option>
+                    </select>
+                </div>
+                <div class="param-group">
+                    <label class="param-label">文本内容</label>
+                    <textarea id="entryText" class="text-area" style="height: 100px;" placeholder="输入文本内容..."></textarea>
+                </div>
+            </div>
+            <div class="action-buttons">
+                <button class="action-button" onclick="addEntry()">添加</button>
+                <button class="action-button secondary" onclick="closeModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let batchEntries = [];
+        let currentConfigAction = null;
+        let selectedEmotions = {
+            1: "happy",
+            2: "surprised",
+            3: "surprised",
+            4: "neutral"
+        };
+
+        // 文本示例
+        const textExamples = {
+            1: { // 开场阶段示例
+                1: "嗯~<#0.4#>你来啦<#0.3#>我等你好久了呢~",
+                2: "哦~<#0.3#>你的手好温暖<#0.4#>嘶~轻点碰我...",
+                3: "我今天<#0.3#>特别想你<#0.4#>能抱抱我吗？"
+            },
+            2: { // 升温阶段示例
+                1: "嗯哼~<#0.2#>就是那里<#0.2#>啊~好舒服~",
+                2: "啊<#0.2#>继续<#0.2#>嗯~<#0.2#>你弄得我好舒服",
+                3: "啊呀~<#0.2#>我喜欢你这样<#0.2#>嗯~再快一点~"
+            },
+            3: { // 高潮阶段示例
+                1: "啊<#0.1#>天啊<#0.05#>不行了<#0.1#>太棒了！",
+                2: "啊<#0.05#>要到了<#0.1#>啊<#0.05#>啊呀<#0.05#>好棒！",
+                3: "啊<#0.1#>就是那里<#0.05#>啊<#0.1#>受不了了<#0.05#>啊~"
+            },
+            4: { // 满足阶段示例
+                1: "呼~<#0.5#>太舒服了<#0.6#>嗯~<#0.4#>好满足...",
+                2: "哈~<#0.6#>你真棒<#0.4#>我太喜欢了<#0.5#>嗯~",
+                3: "嗯~<#0.5#>抱紧我<#0.6#>好舒服<#0.4#>谢谢你~"
+            }
+        };
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 设置滑块值更新
+            initRangeListeners();
+            
+            // 设置情感按钮点击事件
+            initEmotionButtons();
+            
+            // 初始化标签页
+            initTabs();
+            
+            // 生成初始预览
+            generatePreview();
+        });
+
+        // 初始化滑块监听器
+        function initRangeListeners() {
+            document.querySelectorAll('.param-range').forEach(slider => {
+                const valueDisplay = document.getElementById(slider.id + '_value');
+                slider.addEventListener('input', function() {
+                    valueDisplay.textContent = this.value;
+                });
+            });
+        }
+
+        // 初始化情感按钮
+        function initEmotionButtons() {
+            document.querySelectorAll('.emotion-button').forEach(button => {
+                button.addEventListener('click', function() {
+                    const stage = this.getAttribute('data-stage');
+                    const emotion = this.getAttribute('data-emotion');
+                    
+                    // 移除该阶段所有按钮的选中状态
+                    document.querySelectorAll(`.emotion-button[data-stage="${stage}"]`).forEach(btn => {
+                        btn.classList.remove('selected');
+                    });
+                    
+                    // 添加当前按钮的选中状态
+                    this.classList.add('selected');
+                    
+                    // 更新全局选中情感
+                    selectedEmotions[stage] = emotion;
+                });
+            });
+        }
+
+        // 初始化标签页
+        function initTabs() {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // 移除所有标签和内容的活动状态
+                    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    
+                    // 添加当前标签和内容的活动状态
+                    this.classList.add('active');
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // 如果切换到预览标签，更新预览
+                    if (tabId === 'preview') {
+                        generatePreview();
+                    }
+                });
+            });
+        }
+
+        // 切换阶段详情显示
+        function toggleStageDetails(stageIndex) {
+            const stageCards = document.querySelectorAll('.stage-card');
+            const details = stageCards[stageIndex].querySelector('.stage-details');
+            const button = stageCards[stageIndex].querySelector('.stage-toggle');
+            
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                button.textContent = '收起';
+            } else {
+                details.style.display = 'none';
+                button.textContent = '展开';
+            }
+        }
+
+        // 设置示例文本
+        function setExampleText(stage, exampleNum) {
+            const textArea = document.getElementById(`stage${stage}_text`);
+            textArea.value = textExamples[stage][exampleNum];
+        }
+
+        // 导出配置
+        function exportConfig() {
+            const config = getConfig();
+            
+            document.getElementById('modalTitle').textContent = '导出配置';
+            document.getElementById('configText').value = JSON.stringify(config, null, 2);
+            document.getElementById('configAction').textContent = '复制';
+            currentConfigAction = 'export';
+            
+            document.getElementById('configModal').style.display = 'flex';
+        }
+
+        // 导入配置
+        function importConfig() {
+            document.getElementById('modalTitle').textContent = '导入配置';
+            document.getElementById('configText').value = '';
+            document.getElementById('configText').placeholder = '粘贴配置JSON...';
+            document.getElementById('configAction').textContent = '导入';
+            currentConfigAction = 'import';
+            
+            document.getElementById('configModal').style.display = 'flex';
+        }
+
+        // 处理配置操作
+        function handleConfigAction() {
+            if (currentConfigAction === 'export') {
+                // 复制到剪贴板
+                const configText = document.getElementById('configText');
+                configText.select();
+                document.execCommand('copy');
+                
+                // 显示成功信息
+                const originalText = document.getElementById('configAction').textContent;
+                document.getElementById('configAction').textContent = '已复制!';
+                setTimeout(() => {
+                    document.getElementById('configAction').textContent = originalText;
+                }, 1500);
+            } else if (currentConfigAction === 'import') {
+                // 导入配置
+                try {
+                    const config = JSON.parse(document.getElementById('configText').value);
+                    applyConfig(config);
+                    closeModal();
+                    generatePreview();
+                } catch (e) {
+                    alert('配置格式无效，请检查JSON格式是否正确。');
+                }
+            }
+        }
+
+        // 获取当前配置
+        function getConfig() {
+            const config = {
+                stages: [
+                    {
+                        name: "开场阶段",
+                        speed: parseFloat(document.getElementById('stage1_speed').value),
+                        vol: parseFloat(document.getElementById('stage1_vol').value),
+                        pitch: parseFloat(document.getElementById('stage1_pitch').value),
+                        emotion: selectedEmotions[1],
+                        text: document.getElementById('stage1_text').value
+                    },
+                    {
+                        name: "升温阶段",
+                        speed: parseFloat(document.getElementById('stage2_speed').value),
+                        vol: parseFloat(document.getElementById('stage2_vol').value),
+                        pitch: parseFloat(document.getElementById('stage2_pitch').value),
+                        emotion: selectedEmotions[2],
+                        text: document.getElementById('stage2_text').value
+                    },
+                    {
+                        name: "高潮阶段",
+                        speed: parseFloat(document.getElementById('stage3_speed').value),
+                        vol: parseFloat(document.getElementById('stage3_vol').value),
+                        pitch: parseFloat(document.getElementById('stage3_pitch').value),
+                        emotion: selectedEmotions[3],
+                        text: document.getElementById('stage3_text').value
+                    },
+                    {
+                        name: "满足阶段",
+                        speed: parseFloat(document.getElementById('stage4_speed').value),
+                        vol: parseFloat(document.getElementById('stage4_vol').value),
+                        pitch: parseFloat(document.getElementById('stage4_pitch').value),
+                        emotion: selectedEmotions[4],
+                        text: document.getElementById('stage4_text').value
+                    }
+                ]
+            };
+            
+            return config;
+        }
+
+        // 应用配置
+        function applyConfig(config) {
+            try {
+                const stages = config.stages;
+
+                for (let i = 0; i < stages.length; i++) {
+                    const stageNum = i + 1;
+                    const stage = stages[i];
+
+                    // 设置滑块值
+                    document.getElementById(`stage${stageNum}_speed`).value = stage.speed;
+                    document.getElementById(`stage${stageNum}_speed_value`).textContent = stage.speed;
+                    
+                    document.getElementById(`stage${stageNum}_vol`).value = stage.vol;
+                    document.getElementById(`stage${stageNum}_vol_value`).textContent = stage.vol;
+                    
+                    document.getElementById(`stage${stageNum}_pitch`).value = stage.pitch;
+                    document.getElementById(`stage${stageNum}_pitch_value`).textContent = stage.pitch;
+
+                    // 设置情感
+                    selectedEmotions[stageNum] = stage.emotion;
+                    document.querySelectorAll(`.emotion-button[data-stage="${stageNum}"]`).forEach(btn => {
+                        btn.classList.remove('selected');
+                        if (btn.getAttribute('data-emotion') === stage.emotion) {
+                            btn.classList.add('selected');
+                        }
+                    });
+
+                    // 设置文本
+                    document.getElementById(`stage${stageNum}_text`).value = stage.text;
+                }
+            } catch (e) {
+                console.error('配置应用失败:', e);
+                alert('配置应用失败，格式可能不正确。');
+            }
+        }
+
+        // 关闭对话框
+        function closeModal() {
+            document.getElementById('configModal').style.display = 'none';
+            document.getElementById('entryModal').style.display = 'none';
+        }
+
+        // 生成预览
+        function generatePreview() {
+            const config = getConfig();
+            const previewContainer = document.getElementById('stagesPreview');
+            
+            // 清空当前预览
+            previewContainer.innerHTML = '<h3 class="preview-title">当前阶段设置</h3>';
+            
+            // 为每个阶段生成预览
+            config.stages.forEach((stage, index) => {
+                const stageDiv = document.createElement('div');
+                stageDiv.className = 'stage-preview-item';
+                
+                const stageName = document.createElement('div');
+                stageName.className = 'preview-stage-name';
+                stageName.textContent = stage.name;
+                
+                const params = document.createElement('pre');
+                params.className = 'preview-params';
+                params.textContent = 
+                    `speed: ${stage.speed}, vol: ${stage.vol}, pitch: ${stage.pitch}, emotion: ${stage.emotion}`;
+                
+                const text = document.createElement('div');
+                text.className = 'preview-text';
+                text.textContent = stage.text;
+                
+                stageDiv.appendChild(stageName);
+                stageDiv.appendChild(params);
+                stageDiv.appendChild(text);
+                
+                previewContainer.appendChild(stageDiv);
+            });
+
+            // 将同样的内容用于批量处理中的CSV生成
+            generateCsvFromConfig();
+        }
+
+        // 生成CSV内容
+        function generateCsvFromConfig() {
+            const config = getConfig();
+            batchEntries = [];
+            
+            config.stages.forEach((stage, index) => {
+                const stageNum = index + 1;
+                const jsonParams = JSON.stringify({
+                    speed: stage.speed,
+                    vol: stage.vol,
+                    pitch: stage.pitch,
+                    emotion: stage.emotion
+                });
+                
+                batchEntries.push({
+                    stageNum,
+                    text: stage.text,
+                    params: jsonParams
+                });
+            });
+            
+            updateBatchList();
+            
+            // 启用生成按钮
+            document.getElementById('generateButton').disabled = false;
+        }
+
+        // 更新批处理列表
+        function updateBatchList() {
+            const batchList = document.getElementById('batchList');
+            batchList.innerHTML = '';
+            
+            if (batchEntries.length === 0) {
+                batchList.innerHTML = '<div class="batch-item">请上传CSV文件或手动添加条目...</div>';
+                return;
+            }
+            
+            batchEntries.forEach((entry, index) => {
+                const entryDiv = document.createElement('div');
+                entryDiv.className = 'batch-item';
+                
+                const stageName = ['开场阶段', '升温阶段', '高潮阶段', '满足阶段'][entry.stageNum - 1];
+                const params = JSON.parse(entry.params);
+                
+                entryDiv.innerHTML = `
+                    <div>
+                        <strong>${stageName}</strong> - 
+                        <span style="color: #666; font-size: 0.9em;">
+                            速度:${params.speed}, 音量:${params.vol}, 音调:${params.pitch}, 情感:${params.emotion}
+                        </span>
+                        <br>
+                        <span style="font-style: italic;">${entry.text.length > 30 ? entry.text.substring(0, 30) + '...' : entry.text}</span>
+                    </div>
+                    <div>
+                        <button class="copy-button" onclick="copyEntryText(${index})">复制</button>
+                        <button class="copy-button" style="background: #e74c3c;" onclick="deleteEntry(${index})">删除</button>
+                    </div>
+                `;
+                
+                batchList.appendChild(entryDiv);
+            });
+        }
+
+        // 复制条目文本
+        function copyEntryText(index) {
+            const textArea = document.createElement('textarea');
+            textArea.value = batchEntries[index].text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // 显示反馈
+            logToConsole('已复制文本到剪贴板', 'success');
+        }
+
+        // 删除条目
+        function deleteEntry(index) {
+            batchEntries.splice(index, 1);
+            updateBatchList();
+            logToConsole('已删除条目', 'info');
+        }
+
+        // 处理文件选择
+        function handleFileSelect(fileInput) {
+            const file = fileInput.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                parseCsvContent(content);
+            };
+            reader.readAsText(file);
+        }
+
+        // 解析CSV内容
+        function parseCsvContent(content) {
+            try {
+                const lines = content.split('\n');
+                batchEntries = [];
+                
+                lines.forEach(line => {
+                    if (!line.trim()) return;
+                    
+                    const parts = line.split('\t');
+                    if (parts.length < 2) return;
+                    
+                    // 确定阶段编号
+                    let stageNum = 1;
+                    if (parts[0].includes('开场')) stageNum = 1;
+                    else if (parts[0].includes('升温')) stageNum = 2;
+                    else if (parts[0].includes('高潮')) stageNum = 3;
+                    else if (parts[0].includes('满足')) stageNum = 4;
+                    
+                    // 解析参数或使用默认值
+                    let params = {};
+                    try {
+                        if (parts[0].includes('{')) {
+                            params = JSON.parse(parts[0].substring(parts[0].indexOf('{')));
+                        } else {
+                            // 使用默认参数
+                            const defaultParams = [
+                                { speed: 0.85, vol: 0.9, pitch: 1.0, emotion: "happy" },
+                                { speed: 1.0, vol: 1.1, pitch: 1.5, emotion: "surprised" },
+                                { speed: 1.2, vol: 1.3, pitch: 2.0, emotion: "surprised" },
+                                { speed: 0.75, vol: 0.8, pitch: 0.0, emotion: "neutral" }
+                            ];
+                            params = defaultParams[stageNum - 1];
+                        }
+                    } catch (e) {
+                        console.error('参数解析失败:', e);
+                        // 使用默认参数
+                        const defaultParams = [
+                            { speed: 0.85, vol: 0.9, pitch: 1.0, emotion: "happy" },
+                            { speed: 1.0, vol: 1.1, pitch: 1.5, emotion: "surprised" },
+                            { speed: 1.2, vol: 1.3, pitch: 2.0, emotion: "surprised" },
+                            { speed: 0.75, vol: 0.8, pitch: 0.0, emotion: "neutral" }
+                        ];
+                        params = defaultParams[stageNum - 1];
+                    }
+                    
+                    batchEntries.push({
+                        stageNum,
+                        text: parts[1],
+                        params: JSON.stringify(params)
+                    });
+                });
+                
+                updateBatchList();
+                document.getElementById('generateButton').disabled = false;
+                logToConsole(`CSV文件解析成功，共${batchEntries.length}条记录`, 'success');
+            } catch (e) {
+                console.error('CSV解析错误:', e);
+                logToConsole('CSV解析失败: ' + e.message, 'error');
+            }
+        }
+
+        // 添加手动条目对话框
+        function addManualEntry() {
+            document.getElementById('entryModal').style.display = 'flex';
+        }
+
+        // 添加条目
+        function addEntry() {
+            const stage = document.getElementById('entryStage').value;
+            const text = document.getElementById('entryText').value;
+            
+            if (!text.trim()) {
+                alert('请输入文本内容');
+                return;
+            }
+            
+            // 使用该阶段的默认参数
+            const stageNum = parseInt(stage);
+            const config = getConfig();
+            const stageConfig = config.stages[stageNum - 1];
+            
+            batchEntries.push({
+                stageNum,
+                text: text,
+                params: JSON.stringify({
+                    speed: stageConfig.speed,
+                    vol: stageConfig.vol,
+                    pitch: stageConfig.pitch,
+                    emotion: stageConfig.emotion
+                })
+            });
+            
+            updateBatchList();
+            closeModal();
+            document.getElementById('generateButton').disabled = false;
+            logToConsole('已添加新条目', 'success');
+        }
+
+        // 下载当前CSV
+        function downloadCsv() {
+            if (batchEntries.length === 0) {
+                alert('没有可下载的内容');
+                return;
+            }
+            
+            let csvContent = "";
+            
+            batchEntries.forEach(entry => {
+                const stageName = ['开场阶段', '升温阶段', '高潮阶段', '满足阶段'][entry.stageNum - 1];
+                csvContent += `${stageName} ${entry.params}\t${entry.text}\n`;
+            });
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "voice_params.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            logToConsole('CSV文件已下载', 'success');
+        }
+
+        // 批量生成
+        function generateBatch() {
+            if (batchEntries.length === 0) {
+                alert('没有可生成的内容');
+                return;
+            }
+            
+            // 生成最终的CSV文件内容
+            let csvContent = "";
+            
+            batchEntries.forEach((entry, index) => {
+                const params = JSON.parse(entry.params);
+                const stageNum = entry.stageNum;
+                const stageName = ['开场阶段', '升温阶段', '高潮阶段', '满足阶段'][stageNum - 1];
+                
+                // 构建命令行参数格式
+                const paramString = `--speed ${params.speed} --vol ${params.vol} --pitch ${params.pitch} --emotion ${params.emotion}`;
+                csvContent += `${paramString}\t${entry.text}\n`;
+            });
+            
+            // 创建并下载CSV文件
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `input_${timestamp}.csv`;
+            
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            logToConsole(`已生成CSV文件 ${fileName}，请上传到服务器执行`, 'success');
+            logToConsole('服务器执行命令: ./run_script.sh ' + fileName, 'info');
+            
+            // 显示SSH命令帮助
+            logToConsole('---SSH连接命令---', 'info');
+            logToConsole('ssh suming@10.17.8.181', 'info');
+            logToConsole('密码: MvvquaWs', 'info');
+            logToConsole('cd /DATA/disk1/suming/voice_clone/minimax/0419', 'info');
+            logToConsole('上传文件后执行: ./run_script.sh ' + fileName, 'info');
+            logToConsole('下载结果: scp -r suming@10.17.8.181:/DATA/disk1/suming/voice_clone/minimax/0419/results .', 'info');
+        }
+
+        // 生成单个音频
+        function generateSingleAudio(stageNum) {
+            const config = getConfig();
+            const stage = config.stages[stageNum - 1];
+            
+            // 构建参数文本
+            const paramString = `--speed ${stage.speed} --vol ${stage.vol} --pitch ${stage.pitch} --emotion ${stage.emotion}`;
+            const csvContent = `${paramString}\t${stage.text}\n`;
+            
+            // 创建并下载CSV文件
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const fileName = `single_${stageNum}_${timestamp}.csv`;
+            
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", fileName);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            alert(`已生成${stage.name}的CSV文件，请上传到服务器执行:\n./run_script.sh ${fileName}`);
+        }
+
+        // 输出到控制台
+        function logToConsole(message, type) {
+            const console = document.getElementById('outputConsole');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `console-message ${type}`;
+            messageDiv.textContent = message;
+            console.appendChild(messageDiv);
+            console.scrollTop = console.scrollHeight;
+        }
+    </script>
+</body>
+</html>
