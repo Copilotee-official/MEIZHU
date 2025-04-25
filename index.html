@@ -1,0 +1,2798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MiniMax TTS - 增强版</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      max-width: 850px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #f5f9ff;
+      color: #333;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    
+    h1, h2, h3 {
+      color: #2c3e50;
+    }
+    
+    .form-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 15px;
+    }
+    
+    @media (max-width: 768px) {
+      .form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #4a6fa5;
+    }
+    
+    input, select, textarea {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+    
+    button {
+      background: #4a6fa5;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    button:hover {
+      background: #3a5a80;
+    }
+    
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .secondary-btn {
+      background: #6c757d;
+    }
+    
+    .success-btn {
+      background: #28a745;
+    }
+    
+    .danger-btn {
+      background: #dc3545;
+    }
+    
+    .logs {
+      background: #1e272e;
+      color: #f5f6fa;
+      padding: 15px;
+      border-radius: 5px;
+      font-family: monospace;
+      height: 200px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+    
+    .log-entry {
+      margin-bottom: 5px;
+      border-bottom: 1px solid #34495e;
+      padding-bottom: 5px;
+    }
+    
+    .log-info { color: #3498db; }
+    .log-success { color: #2ecc71; }
+    .log-error { color: #e74c3c; }
+    .log-warning { color: #f39c12; }
+    .log-debug { color: #9b59b6; }
+    
+    .audio-container {
+      margin-top: 20px;
+      padding: 15px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    audio {
+      width: 100%;
+      margin-bottom: 10px;
+    }
+    
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+    
+    .spinner {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+      margin-right: 10px;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    .slider-container {
+      display: flex;
+      align-items: center;
+    }
+    
+    .slider {
+      flex: 1;
+      margin-right: 10px;
+    }
+    
+    .slider-value {
+      width: 50px;
+      text-align: center;
+      font-weight: bold;
+    }
+    
+    /* 新增样式 - 暂停标记编辑器 */
+    .text-editor-container {
+      position: relative;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      background: white;
+      margin-bottom: 15px;
+    }
+    
+    .text-editor {
+      padding: 10px;
+      min-height: 150px;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      overflow-y: auto;
+      outline: none;
+    }
+    
+    .editor-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      padding: 5px;
+      background: #f0f0f0;
+      border-bottom: 1px solid #ddd;
+    }
+    
+    .toolbar-btn {
+      margin: 2px;
+      padding: 5px 10px;
+      font-size: 12px;
+      background: #4a6fa5;
+      color: white;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+    }
+    
+    .toolbar-btn:hover {
+      background: #3a5a80;
+    }
+    
+    .pause-mark {
+      background-color: #fff3cd;
+      border-radius: 3px;
+      padding: 0 3px;
+      margin: 0 2px;
+      border: 1px solid #ffeeba;
+      color: #856404;
+      font-family: monospace;
+      cursor: pointer;
+    }
+    
+    .pause-mark:hover {
+      background-color: #ffeeba;
+    }
+    
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid #ddd;
+      margin-bottom: 20px;
+    }
+    
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      background: #f0f0f0;
+      margin-right: 5px;
+      border-radius: 5px 5px 0 0;
+      border: 1px solid #ddd;
+      border-bottom: none;
+    }
+    
+    .tab.active {
+      background: #4a6fa5;
+      color: white;
+      border-color: #4a6fa5;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    /* 弹窗样式 */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 100;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+    }
+    
+    .modal-content {
+      background-color: white;
+      margin: 10% auto;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      max-width: 500px;
+      position: relative;
+    }
+    
+    .close-btn {
+      position: absolute;
+      right: 15px;
+      top: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    
+    /* 暂停时长编辑器 */
+    .pause-editor-form {
+      margin-top: 15px;
+    }
+    
+    .pause-preview {
+      font-family: monospace;
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      border: 1px solid #ddd;
+      margin-top: 10px;
+    }
+    
+    /* 统计面板样式 */
+    .stats-panel {
+      background: #fff;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 15px;
+      margin-top: 20px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .stats-title {
+      margin-top: 0;
+      color: #4a6fa5;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 8px;
+      margin-bottom: 15px;
+    }
+    
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    
+    .stat-item {
+      background: #f8f9fa;
+      padding: 10px;
+      border-radius: 4px;
+      border-left: 3px solid #4a6fa5;
+    }
+    
+    .stat-label {
+      font-weight: bold;
+      color: #555;
+      font-size: 0.9em;
+      margin-bottom: 5px;
+    }
+    
+    .stat-value {
+      font-size: 1.2em;
+      color: #2c3e50;
+    }
+    
+    /* 声音模板样式 */
+    .voice-templates {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .voice-template-btn {
+      background: #5d7ea8;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.3s;
+      font-weight: bold;
+    }
+    
+    .voice-template-btn:hover {
+      background: #4a6fa5;
+      transform: translateY(-2px);
+    }
+    
+    .voice-template-btn.enchanting {
+      background: #9c27b0;
+    }
+    
+    .voice-template-btn.enchanting:hover {
+      background: #7b1fa2;
+    }
+    
+    .voice-template-btn.intimate {
+      background: #e91e63;
+    }
+    
+    .voice-template-btn.intimate:hover {
+      background: #c2185b;
+    }
+    
+    .voice-template-btn.whisper {
+      background: #673ab7;
+    }
+    
+    .voice-template-btn.whisper:hover {
+      background: #512da8;
+    }
+    
+    .voice-template-btn.satisfied {
+      background: #00bcd4;
+    }
+    
+    .voice-template-btn.satisfied:hover {
+      background: #00acc1;
+    }
+    
+    .voice-template-btn.anticipating {
+      background: #ff9800;
+    }
+    
+    .voice-template-btn.anticipating:hover {
+      background: #f57c00;
+    }
+    
+    .voice-template-btn.shy {
+      background: #ff5722;
+    }
+    
+    .voice-template-btn.shy:hover {
+      background: #e64a19;
+    }
+    
+    /* 音色克隆样式 */
+    .voice-clone-btn {
+      background: #8e44ad;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      margin-bottom: 15px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    
+    .voice-clone-btn:hover {
+      background: #7d3c98;
+    }
+    
+    .clone-modal {
+      max-width: 600px;
+    }
+    
+    .file-input-container {
+      position: relative;
+      margin-top: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .file-input-label {
+      display: inline-block;
+      padding: 8px 15px;
+      background: #5d7ea8;
+      color: white;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+    
+    .file-input-label:hover {
+      background: #4a6fa5;
+    }
+    
+    .file-input {
+      position: absolute;
+      width: 0.1px;
+      height: 0.1px;
+      opacity: 0;
+      overflow: hidden;
+      z-index: -1;
+    }
+    
+    .file-name {
+      margin-left: 10px;
+      font-style: italic;
+      color: #666;
+    }
+    
+    .validation-text {
+      width: 100%;
+      min-height: 60px;
+    }
+    
+    .clone-options {
+      margin-top: 15px;
+      margin-bottom: 15px;
+    }
+    
+    .custom-voice-list {
+      margin-top: 15px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      padding: 10px;
+    }
+    
+    .custom-voice-item {
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .custom-voice-item:last-child {
+      border-bottom: none;
+    }
+    
+    .custom-voice-name {
+      font-weight: bold;
+    }
+    
+    .custom-voice-date {
+      color: #666;
+      font-size: 0.9em;
+    }
+    
+    .custom-voice-controls {
+      display: flex;
+      gap: 5px;
+    }
+    
+    .save-btn {
+      background: #17a2b8;
+    }
+    
+    .save-btn:hover {
+      background: #138496;
+    }
+    
+    .emotion-btn {
+      background: #4a6fa5;
+      color: white;
+      border: none;
+      padding: 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+      transition: all 0.2s;
+    }
+    
+    .emotion-btn:hover {
+      background: #3a5a80;
+    }
+    
+    .emotion-btn.selected {
+      background: #28a745;
+      border: 2px solid #1e7e34;
+    }
+    
+    .id-validation {
+      color: #6c757d;
+      font-size: 0.9em;
+      margin-top: 5px;
+    }
+    
+    .id-validation.valid {
+      color: #28a745;
+    }
+    
+    .id-validation.invalid {
+      color: #dc3545;
+    }
+    
+    .validation-item {
+      margin-bottom: 2px;
+    }
+    
+    .validation-item.pass {
+      color: #28a745;
+    }
+    
+    .validation-item.fail {
+      color: #dc3545;
+    }
+    
+    .demo-audio-container {
+      margin-top: 15px;
+      padding: 10px;
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    
+    .notice-box {
+      background-color: #fff3cd;
+      border: 1px solid #ffeeba;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+      color: #856404;
+    }
+    
+    .info-box {
+      background-color: #d1ecf1;
+      border: 1px solid #bee5eb;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 15px;
+      color: #0c5460;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>MiniMax TTS - 增强版</h1>
+    
+    <div class="tabs">
+      <div class="tab active" data-tab="main">主界面</div>
+      <div class="tab" data-tab="voice-clone">音色克隆</div>
+      <div class="tab" data-tab="settings">高级设置</div>
+    </div>
+    
+    <div class="tab-content active" id="main">
+      <div class="form-group">
+        <label for="textEditor">文本内容</label>
+        <div class="editor-toolbar">
+          <button type="button" class="toolbar-btn" onclick="insertPauseMark(0.3)">插入短暂停 (0.3s)</button>
+          <button type="button" class="toolbar-btn" onclick="insertPauseMark(0.5)">插入中等暂停 (0.5s)</button>
+          <button type="button" class="toolbar-btn" onclick="insertPauseMark(1.0)">插入长暂停 (1s)</button>
+          <button type="button" class="toolbar-btn" onclick="insertPauseMark()" title="自定义暂停时长">自定义暂停...</button>
+          <button type="button" class="toolbar-btn" style="background: #dc3545" onclick="clearEditor()">清空</button>
+        </div>
+        <div class="text-editor-container">
+          <div id="textEditor" class="text-editor" contenteditable="true">嗯~<span class="pause-mark" data-pause="0.4" onclick="editPauseMark(this)">&lt;#0.4#&gt;</span>你来啦<span class="pause-mark" data-pause="0.3" onclick="editPauseMark(this)">&lt;#0.3#&gt;</span>我等你好久了呢~</div>
+        </div>
+        <small>点击暂停标记可以编辑暂停时长。标记格式：&lt;#秒数#&gt;</small>
+      </div>
+      
+      <div class="form-group">
+        <label>声音模板</label>
+        <div class="voice-templates">
+          <button type="button" class="voice-template-btn enchanting" onclick="applyVoiceTemplate('enchanting')">魅惑低语</button>
+          <button type="button" class="voice-template-btn intimate" onclick="applyVoiceTemplate('intimate')">亲密暗示</button>
+          <button type="button" class="voice-template-btn whisper" onclick="applyVoiceTemplate('whisper')">气息耳语</button>
+          <button type="button" class="voice-template-btn satisfied" onclick="applyVoiceTemplate('satisfied')">满足喘息</button>
+          <button type="button" class="voice-template-btn anticipating" onclick="applyVoiceTemplate('anticipating')">期待邀请</button>
+          <button type="button" class="voice-template-btn shy" onclick="applyVoiceTemplate('shy')">羞涩娇嗔</button>
+        </div>
+      </div>
+      
+      <div class="form-grid">
+        <div>
+          <div class="form-group">
+            <label for="model">模型选择</label>
+            <select id="model" onchange="updateStatsDisplay()">
+              <option value="speech-02-hd" selected>speech-02-hd（高清版）</option>
+              <option value="speech-02-turbo">speech-02-turbo（高速版）</option>
+              <option value="speech-01-hd">speech-01-hd（旧高清版）</option>
+              <option value="speech-01-turbo">speech-01-turbo（旧高速版）</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label for="voiceId">音色选择</label>
+            <select id="voiceId">
+              <option value="sm_0421_king_30s" selected>sm_0421_king_30s（默认）</option>
+              <option value="male-qn-qingse">male-qn-qingse（青涩男声）</option>
+              <option value="female-shaonv">female-shaonv（少女音）</option>
+              <option value="female-yujie">female-yujie（玉洁音）</option>
+              <option value="male-yifei">male-yifei（逸飞音）</option>
+              <!-- 克隆音色将被动态添加到这里 -->
+            </select>
+          </div>
+        </div>
+        
+        <div>
+          <div class="form-group">
+            <label>情感选择</label>
+            <div class="grid-3">
+              <button type="button" class="emotion-btn" data-emotion="happy" onclick="selectEmotion(this, 'happy')">欢快</button>
+              <button type="button" class="emotion-btn" data-emotion="sad" onclick="selectEmotion(this, 'sad')">悲伤</button>
+              <button type="button" class="emotion-btn" data-emotion="angry" onclick="selectEmotion(this, 'angry')">愤怒</button>
+              <button type="button" class="emotion-btn" data-emotion="neutral" onclick="selectEmotion(this, 'neutral')">中性</button>
+              <button type="button" class="emotion-btn selected" data-emotion="surprised" onclick="selectEmotion(this, 'surprised')">惊讶</button>
+              <button type="button" class="emotion-btn" data-emotion="fear" onclick="selectEmotion(this, 'fear')">恐惧</button>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="proxies">代理选择</label>
+            <select id="proxies">
+              <option value="" selected>不使用代理（推荐）</option>
+              <option value="https://corsproxy.io/?">corsproxy.io</option>
+              <option value="https://api.allorigins.win/raw?url=">allorigins.win</option>
+              <option value="https://thingproxy.freeboard.io/fetch/">thingproxy</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="speed">语速调节: <span id="speedValue">1.0</span></label>
+        <div class="slider-container">
+          <input type="range" id="speed" class="slider" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updateSliderValue('speed', 'speedValue')">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="volume">音量调节: <span id="volumeValue">1.0</span></label>
+        <div class="slider-container">
+          <input type="range" id="volume" class="slider" min="0.5" max="2.0" step="0.05" value="1.0" oninput="updateSliderValue('volume', 'volumeValue')">
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="pitch">音调调节: <span id="pitchValue">0</span></label>
+        <div class="slider-container">
+          <input type="range" id="pitch" class="slider" min="-10" max="10" step="1" value="0" oninput="updateSliderValue('pitch', 'pitchValue')">
+        </div>
+      </div>
+      
+      <div style="margin-top: 20px;">
+        <button id="generateBtn" onclick="generateSpeech()">生成语音</button>
+        <button onclick="clearLogs()" class="secondary-btn">清除日志</button>
+        <button onclick="testAllProxies()" class="secondary-btn">测试所有代理</button>
+      </div>
+      
+      <div class="stats-panel">
+        <h3 class="stats-title">使用统计</h3>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-label">本次字符数</div>
+            <div class="stat-value" id="currentChars">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">本次费用</div>
+            <div class="stat-value" id="currentCost">¥0.00</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">累计字符数</div>
+            <div class="stat-value" id="totalChars">0</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">累计费用</div>
+            <div class="stat-value" id="totalCost">¥0.00</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="logs" id="logs">
+        <div class="log-entry log-info">准备就绪，请设置参数并输入文本...</div>
+      </div>
+      
+      <div class="audio-container" id="audioContainer" style="display: none;">
+        <h3>生成结果</h3>
+        <audio id="audioPlayer" controls></audio>
+        <div style="margin-top: 10px;">
+          <button onclick="downloadAudio()" class="success-btn">下载音频</button>
+          <button onclick="repeatPlayback()" class="secondary-btn">重复播放</button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- 音色克隆标签页 -->
+    <div class="tab-content" id="voice-clone">
+      <h2>音色克隆</h2>
+      
+      <div class="info-box">
+        <p><strong>音色克隆说明：</strong></p>
+        <p>1. 上传音频文件应为MP3、M4A或WAV格式，长度10秒-5分钟，大小不超过20MB</p>
+        <p>2. 音色ID必须以字母开头，长度8-256字符，仅允许字母、数字、连字符和下划线</p>
+        <p>3. 克隆音色默认保留7天，通过在生成标签页使用该音色可永久保存</p>
+        <p>4. 示例音频（可选）：提供一段小于8秒的示例音频和对应文本可提高音色相似度</p>
+      </div>
+      
+      <div class="form-group">
+        <button class="voice-clone-btn" onclick="openCloneModal()">创建新音色</button>
+      </div>
+      
+      <h3>我的克隆音色</h3>
+      <div id="customVoiceList" class="custom-voice-list">
+        <div class="log-entry log-info">暂无克隆音色，请点击"创建新音色"按钮创建。</div>
+      </div>
+    </div>
+    
+    <div class="tab-content" id="settings">
+      <h2>高级设置</h2>
+      
+      <div class="form-group">
+        <label for="sampleRate">采样率</label>
+        <select id="sampleRate">
+          <option value="16000">16000 Hz</option>
+          <option value="24000">24000 Hz</option>
+          <option value="32000" selected>32000 Hz</option>
+          <option value="44100">44100 Hz</option>
+          <option value="48000">48000 Hz</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="bitrate">比特率</label>
+        <select id="bitrate">
+          <option value="64000">64 kbps</option>
+          <option value="96000">96 kbps</option>
+          <option value="128000" selected>128 kbps</option>
+          <option value="192000">192 kbps</option>
+          <option value="256000">256 kbps</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="format">音频格式</label>
+        <select id="format">
+          <option value="mp3" selected>MP3</option>
+          <option value="wav">WAV</option>
+          <option value="pcm">PCM</option>
+          <option value="flac">FLAC</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="language">语言增强</label>
+        <select id="language">
+          <option value="auto">自动检测</option>
+          <option value="Chinese" selected>中文</option>
+          <option value="Chinese,Yue">粤语</option>
+          <option value="English">英语</option>
+          <option value="Japanese">日语</option>
+          <option value="Korean">韩语</option>
+          <option value="Russian">俄语</option>
+          <option value="French">法语</option>
+          <option value="German">德语</option>
+        </select>
+      </div>
+      
+      <div class="form-group">
+        <label for="apiKey">API密钥 (已预设)</label>
+        <input type="text" id="apiKey" value="eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJHcm91cE5hbWUiOiLoi4_mmI4iLCJVc2VyTmFtZSI6IuiLj-aYjiIsIkFjY291bnQiOiIiLCJTdWJqZWN0SUQiOiIxOTEyNjc4NjAwODM5MDEyOTY1IiwiUGhvbmUiOiIxNTExNjkwNTA2MiIsIkdyb3VwSUQiOiIxOTEyNjc4NjAwODMwNjI0MzU3IiwiUGFnZU5hbWUiOiIiLCJNYWlsIjoiIiwiQ3JlYXRlVGltZSI6IjIwMjUtMDQtMTkgMTE6MDQ6MzMiLCJUb2tlblR5cGUiOjEsImlzcyI6Im1pbmltYXgifQ.V_YhYLmgyfnAV3ssptSqTKHiUjuqbQq62FZBCsRJgtUobIMCJuZYtxHuBtOcJot6VeKLjUXZtECPrjqGTR6MfViYujZC-HdXcUxUtVW3Z59_hHr2UWVnLUGLl0CQoiM0-QtEOa2KL3-VCo7iffhSnusNiYX9LF44iefN0AOEdKuMlmj8NejFPCamusQ1soCwIto2dT3oCkPSm8IOPWs4qej_jgc07yGRiZVFIfBOFO8opiWrzu9z43KGACQsbAAzdxLFKbm3P_uwSjrVNTBxOI8FXGXYBBR3zIOJT-9rwtRq-k9CnITKyo4_YyAmmD29ps_Q6etakd1KJBFfgZN5Bg">
+      </div>
+      
+      <div class="form-group">
+        <label for="groupId">组ID (已预设)</label>
+        <input type="text" id="groupId" value="1912678600830624357">
+      </div>
+      
+      <div class="form-group">
+        <label for="apiEndpoint">API端点</label>
+        <input type="text" id="apiEndpoint" value="https://api.minimax.chat/v1/t2a_v2">
+      </div>
+      
+      <div class="form-group">
+        <button onclick="resetStats()" class="danger-btn">重置统计数据</button>
+      </div>
+      
+      <div class="form-group">
+        <label for="storageMode">存储模式</label>
+        <select id="storageMode" onchange="changeStorageMode()">
+          <option value="memory" selected>内存模式 (适用于沙箱环境)</option>
+          <option value="localStorage">LocalStorage (需要同源权限)</option>
+        </select>
+        <small>如果在沙箱环境中出现存储错误，请使用内存模式</small>
+      </div>
+      
+      <div class="form-group">
+        <label for="debug-mode">调试模式</label>
+        <select id="debug-mode" onchange="changeDebugMode()">
+          <option value="normal">正常模式</option>
+          <option value="debug">调试模式 (跳过API调用)</option>
+        </select>
+        <small>调试模式下仅模拟API调用，不会产生实际请求</small>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 暂停标记编辑弹窗 -->
+  <div id="pauseModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" onclick="closePauseModal()">&times;</span>
+      <h3>编辑暂停时长</h3>
+      <div class="pause-editor-form">
+        <div class="form-group">
+          <label for="pauseDuration">暂停时长 (秒)</label>
+          <input type="number" id="pauseDuration" min="0.1" max="5" step="0.1" value="0.5">
+        </div>
+        <div class="pause-preview" id="pausePreview">&lt;#0.5#&gt;</div>
+        <div style="margin-top: 15px;">
+          <button onclick="applyPauseEdit()" class="success-btn">应用</button>
+          <button onclick="closePauseModal()" class="secondary-btn">取消</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 音色克隆弹窗 -->
+  <div id="cloneModal" class="modal">
+    <div class="modal-content clone-modal">
+      <span class="close-btn" onclick="closeCloneModal()">&times;</span>
+      <h3>创建新音色</h3>
+      <div class="form-group">
+        <label for="customVoiceId">自定义音色ID</label>
+        <input type="text" id="customVoiceId" placeholder="请输入8-256个字符，字母开头" oninput="validateVoiceId()">
+        <div id="idValidation" class="id-validation">
+          <div class="validation-item" id="validLength">• 长度需要在8-256个字符之间</div>
+          <div class="validation-item" id="validStart">• 必须以字母开头</div>
+          <div class="validation-item" id="validChars">• 只允许字母、数字、连字符(-)和下划线(_)</div>
+          <div class="validation-item" id="validEnd">• 末位字符不能是连字符(-)或下划线(_)</div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="cloneAudioFile">上传音频文件 (MP3/M4A/WAV，10秒-5分钟，<20MB)</label>
+        <div class="file-input-container">
+          <label for="cloneAudioFile" class="file-input-label">选择文件</label>
+          <input type="file" id="cloneAudioFile" class="file-input" accept=".mp3,.m4a,.wav" onchange="validateAudioFile(this, 'cloneFileName')">
+          <span id="cloneFileName" class="file-name">未选择文件</span>
+        </div>
+        <div id="audioFileValidation"></div>
+      </div>
+      
+      <div class="form-group">
+        <label for="promptAudioFile">示例音频文件 (可选，<8秒)</label>
+        <div class="file-input-container">
+          <label for="promptAudioFile" class="file-input-label">选择文件</label>
+          <input type="file" id="promptAudioFile" class="file-input" accept=".mp3,.m4a,.wav" onchange="validateAudioFile(this, 'promptFileName', true)">
+          <span id="promptFileName" class="file-name">未选择文件</span>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="promptText">示例音频对应文本 (如提供示例音频，则必填)</label>
+        <textarea id="promptText" placeholder="请输入示例音频对应的文本内容"></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label for="textValidation">验证文本 (可选，200字以内)</label>
+        <textarea id="textValidation" class="validation-text" placeholder="用于验证音频与文本的差异程度，建议填写与音频内容相符的文本" maxlength="200"></textarea>
+      </div>
+      
+      <div class="form-group clone-options">
+        <div>
+          <input type="checkbox" id="noiseReduction">
+          <label for="noiseReduction" style="display: inline;">启用降噪</label>
+        </div>
+        
+        <div>
+          <input type="checkbox" id="volumeNormalization">
+          <label for="volumeNormalization" style="display: inline;">启用音量归一化</label>
+        </div>
+        
+        <div>
+          <label for="accuracy">准确率阈值:</label>
+          <input type="range" id="accuracy" min="0" max="1" step="0.1" value="0.7" oninput="document.getElementById('accuracyValue').textContent = this.value">
+          <span id="accuracyValue">0.7</span>
+        </div>
+        
+        <div>
+          <input type="checkbox" id="generateDemo" checked>
+          <label for="generateDemo" style="display: inline;">生成试听音频</label>
+        </div>
+      </div>
+      
+      <div style="margin-top: 15px;">
+        <button id="startCloneBtn" onclick="startVoiceClone()">开始克隆</button>
+        <button onclick="closeCloneModal()" class="secondary-btn">取消</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // 内存存储 - 替代 localStorage 用于沙箱环境
+    const memoryStorage = {
+      _data: {},
+      setItem: function(key, value) {
+        this._data[key] = value;
+      },
+      getItem: function(key) {
+        return this._data[key] || null;
+      },
+      removeItem: function(key) {
+        delete this._data[key];
+      },
+      clear: function() {
+        this._data = {};
+      }
+    };
+    
+    // 存储功能封装，适应不同环境
+    const storage = {
+      mode: 'memory', // 默认使用内存模式
+      
+      setItem: function(key, value) {
+        try {
+          if (this.mode === 'localStorage') {
+            localStorage.setItem(key, value);
+          } else {
+            memoryStorage.setItem(key, value);
+          }
+        } catch (e) {
+          console.error("存储失败，回退到内存模式:", e);
+          this.mode = 'memory';
+          memoryStorage.setItem(key, value);
+        }
+      },
+      
+      getItem: function(key) {
+        try {
+          if (this.mode === 'localStorage') {
+            return localStorage.getItem(key);
+          } else {
+            return memoryStorage.getItem(key);
+          }
+        } catch (e) {
+          console.error("读取失败，回退到内存模式:", e);
+          this.mode = 'memory';
+          return memoryStorage.getItem(key);
+        }
+      },
+      
+      removeItem: function(key) {
+        try {
+          if (this.mode === 'localStorage') {
+            localStorage.removeItem(key);
+          } else {
+            memoryStorage.removeItem(key);
+          }
+        } catch (e) {
+          console.error("删除失败:", e);
+        }
+      },
+      
+      clear: function() {
+        try {
+          if (this.mode === 'localStorage') {
+            localStorage.clear();
+          } else {
+            memoryStorage.clear();
+          }
+        } catch (e) {
+          console.error("清除失败:", e);
+        }
+      },
+      
+      // 检测存储模式是否可用
+      detectAvailableMode: function() {
+        try {
+          localStorage.setItem('_test', '1');
+          localStorage.removeItem('_test');
+          this.mode = 'localStorage';
+          return 'localStorage';
+        } catch (e) {
+          this.mode = 'memory';
+          return 'memory';
+        }
+      }
+    };
+    
+    // 调试模式设置
+    let debugMode = false;
+    
+    // 更改调试模式
+    function changeDebugMode() {
+      const mode = document.getElementById('debug-mode').value;
+      debugMode = mode === 'debug';
+      logMessage(`已切换到${debugMode ? '调试' : '正常'}模式`, "info");
+      
+      if (debugMode) {
+        logMessage("调试模式下不会发送实际的API请求，只会模拟响应", "warning");
+      }
+    }
+    
+    // 更改存储模式
+    function changeStorageMode() {
+      const mode = document.getElementById('storageMode').value;
+      storage.mode = mode;
+      logMessage(`已切换到${mode === 'localStorage' ? 'LocalStorage' : '内存'}存储模式`, "info");
+      
+      // 如果切换到localStorage，尝试从内存同步数据
+      if (mode === 'localStorage') {
+        try {
+          localStorage.setItem('minimax_tts_stats', JSON.stringify(usageStats));
+          localStorage.setItem('minimax_custom_voices', JSON.stringify(customVoices));
+          logMessage("数据已同步到LocalStorage", "success");
+        } catch (e) {
+          logMessage("LocalStorage不可用，已回退到内存模式", "error");
+          document.getElementById('storageMode').value = 'memory';
+          storage.mode = 'memory';
+        }
+      }
+    }
+    
+    // 全局变量
+    let currentEmotion = "surprised";      // 当前选择的情绪
+    let currentEmotionDisplay = "惊讶";    // 显示用的情绪名称（中文）
+    let currentAudioBlob = null;
+    let currentEditingMark = null;         // 当前正在编辑的暂停标记
+    let usageStats = {                     // 使用统计
+      currentChars: 0,
+      totalChars: 0
+    };
+    let customVoices = [];                 // 用户克隆的音色列表
+    let demoAudioUrl = null;               // 试听音频URL
+    
+    // 声音模板设置
+    const voiceTemplates = {
+      enchanting: {  // 魅惑低语
+        emotion: "surprised",
+        pitch: -2,
+        speed: 0.85,
+        description: "低沉沙哑的诱惑声线，缓慢且专注，适合引导性的对话"
+      },
+      intimate: {    // 亲密暗示
+        emotion: "surprised",
+        pitch: 0,
+        speed: 0.9,
+        description: "贴近耳边的暧昧话语，温和且略带气息，适合暗示和挑逗"
+      },
+      whisper: {     // 气息耳语
+        emotion: "surprised",
+        pitch: 1,
+        speed: 0.95,
+        description: "细腻的气息声，柔和且略带颤音，适合耳边私语"
+      },
+      satisfied: {   // 满足喘息
+        emotion: "surprised",
+        pitch: -1,
+        speed: 0.8,
+        description: "深沉的满足声，舒缓且放松，适合高潮后的表达"
+      },
+      anticipating: { // 期待邀请
+        emotion: "happy",
+        pitch: 3,
+        speed: 1.1,
+        description: "充满期待的声音，轻快且兴奋，适合邀请和迎合"
+      },
+      shy: {          // 羞涩娇嗔
+        emotion: "surprised",
+        pitch: 2,
+        speed: 0.9,
+        description: "害羞含蓄的声音，软糯且带娇嗔，适合表达羞涩或委屈"
+      }
+    };
+    
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function() {
+      // 检测可用的存储模式
+      const availableMode = storage.detectAvailableMode();
+      document.getElementById('storageMode').value = availableMode;
+      logMessage(`当前使用${availableMode === 'localStorage' ? 'LocalStorage' : '内存'}存储模式`, "info");
+      
+      // 初始化标签页
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', function() {
+          const tabId = this.getAttribute('data-tab');
+          
+          // 切换标签页
+          document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+          
+          this.classList.add('active');
+          document.getElementById(tabId).classList.add('active');
+        });
+      });
+      
+      // 初始化暂停时长输入框事件
+      document.getElementById('pauseDuration').addEventListener('input', function() {
+        updatePausePreview();
+      });
+      
+      // 初始化音色ID输入事件
+      document.getElementById('customVoiceId').addEventListener('input', validateVoiceId);
+      
+      // 加载使用统计
+      loadStats();
+      updateStatsDisplay();
+      
+      // 加载自定义音色
+      loadCustomVoices();
+      
+      // 记录初始化完成
+      logMessage("系统初始化完成", "info");
+      logMessage("准备就绪，请设置参数并输入文本", "info");
+    });
+    
+    // 加载使用统计
+    function loadStats() {
+      try {
+        const savedStats = storage.getItem('minimax_tts_stats');
+        if (savedStats) {
+          const parsedStats = JSON.parse(savedStats);
+          usageStats.totalChars = parsedStats.totalChars || 0;
+        }
+      } catch (error) {
+        console.error("加载统计数据失败:", error);
+        usageStats.totalChars = 0;
+      }
+    }
+    
+    // 保存使用统计
+    function saveStats() {
+      try {
+        storage.setItem('minimax_tts_stats', JSON.stringify(usageStats));
+      } catch (error) {
+        console.error("保存统计数据失败:", error);
+      }
+    }
+    
+    // 重置统计数据
+    function resetStats() {
+      if (confirm('确定要重置所有统计数据吗？')) {
+        usageStats.currentChars = 0;
+        usageStats.totalChars = 0;
+        saveStats();
+        updateStatsDisplay();
+        logMessage("已重置所有统计数据", "info");
+      }
+    }
+    
+    // 更新统计显示
+    function updateStatsDisplay() {
+      document.getElementById('currentChars').textContent = usageStats.currentChars.toLocaleString();
+      document.getElementById('totalChars').textContent = usageStats.totalChars.toLocaleString();
+      
+      const currentCost = calculateCost(usageStats.currentChars);
+      const totalCost = calculateCost(usageStats.totalChars);
+      
+      document.getElementById('currentCost').textContent = `¥${currentCost.toFixed(4)}`;
+      document.getElementById('totalCost').textContent = `¥${totalCost.toFixed(4)}`;
+    }
+    
+    // 计算费用
+    function calculateCost(chars) {
+      const model = document.getElementById('model').value;
+      // 高清版价格：3.5元/万字符，其他版本：2元/万字符
+      const rate = (model.includes('hd')) ? 3.5 : 2.0;
+      return (chars / 10000) * rate;
+    }
+    
+    // 应用声音模板
+    function applyVoiceTemplate(templateName) {
+      if (!voiceTemplates[templateName]) {
+        logMessage(`模板 ${templateName} 不存在`, "error");
+        return;
+      }
+      
+      const template = voiceTemplates[templateName];
+      
+      // 设置情感
+      document.querySelectorAll('.emotion-btn').forEach(btn => {
+        btn.classList.remove('selected');
+        if (btn.getAttribute('data-emotion') === template.emotion) {
+          btn.classList.add('selected');
+        }
+      });
+      
+      currentEmotion = template.emotion;
+      currentEmotionDisplay = getEmotionDisplayName(template.emotion);
+      
+      // 设置音调
+      document.getElementById('pitch').value = template.pitch;
+      document.getElementById('pitchValue').textContent = template.pitch;
+      
+      // 设置语速
+      document.getElementById('speed').value = template.speed;
+      document.getElementById('speedValue').textContent = template.speed;
+      
+      logMessage(`已应用声音模板: ${getTemplateDisplayName(templateName)}`, "success");
+      logMessage(template.description, "info");
+    }
+    
+    // 获取情感显示名称
+    function getEmotionDisplayName(emotion) {
+      const emotionNames = {
+        "happy": "欢快",
+        "sad": "悲伤",
+        "angry": "愤怒", 
+        "neutral": "中性",
+        "surprised": "惊讶",
+        "fear": "恐惧"
+      };
+      
+      return emotionNames[emotion] || emotion;
+    }
+    
+    // 获取模板显示名称
+    function getTemplateDisplayName(templateName) {
+      const templateNames = {
+        "enchanting": "魅惑低语",
+        "intimate": "亲密暗示",
+        "whisper": "气息耳语",
+        "satisfied": "满足喘息",
+        "anticipating": "期待邀请",
+        "shy": "羞涩娇嗔"
+      };
+      
+      return templateNames[templateName] || templateName;
+    }
+    
+    // 更新暂停预览
+    function updatePausePreview() {
+      const duration = document.getElementById('pauseDuration').value;
+      document.getElementById('pausePreview').textContent = `<#${duration}#>`;
+    }
+    
+    // 更新滑块值
+    function updateSliderValue(sliderId, valueId) {
+      const slider = document.getElementById(sliderId);
+      const valueElement = document.getElementById(valueId);
+      valueElement.textContent = slider.value;
+    }
+    
+    // 选择预设情绪
+    function selectEmotion(button, emotion) {
+      // 移除所有选中状态
+      document.querySelectorAll('.emotion-btn').forEach(btn => {
+        btn.classList.remove('selected');
+      });
+      
+      // 添加选中状态
+      button.classList.add('selected');
+      
+      // 设置当前情绪
+      currentEmotion = emotion;
+      currentEmotionDisplay = getEmotionDisplayName(emotion);
+      
+      logMessage(`已选择情绪: ${currentEmotionDisplay}`, "info");
+    }
+    
+    // 插入暂停标记
+    function insertPauseMark(duration) {
+      const editor = document.getElementById('textEditor');
+      const selection = window.getSelection();
+      
+      // 如果没有提供持续时间，则打开编辑器
+      if (duration === undefined) {
+        // 设置默认值
+        document.getElementById('pauseDuration').value = 0.5;
+        updatePausePreview();
+        
+        // 显示弹窗
+        document.getElementById('pauseModal').style.display = 'block';
+        currentEditingMark = null; // 新建标记
+        return;
+      }
+      
+      // 创建暂停标记
+      const pauseMarkElement = document.createElement('span');
+      pauseMarkElement.className = 'pause-mark';
+      pauseMarkElement.setAttribute('data-pause', duration);
+      pauseMarkElement.setAttribute('onclick', 'editPauseMark(this)');
+      pauseMarkElement.textContent = `<#${duration}#>`;
+      
+      // 插入到光标位置
+      if (selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+        range.insertNode(pauseMarkElement);
+        
+        // 将光标定位到插入的元素后面
+        const newRange = document.createRange();
+        newRange.setStartAfter(pauseMarkElement);
+        newRange.setEndAfter(pauseMarkElement);
+        selection.removeAllRanges();
+        selection.addRange(newRange);
+      } else {
+        // 如果没有选择范围，则追加到编辑器末尾
+        editor.appendChild(pauseMarkElement);
+      }
+      
+      // 保持编辑器焦点
+      editor.focus();
+    }
+    
+    // 编辑暂停标记
+    function editPauseMark(element) {
+      // 设置当前编辑的标记
+      currentEditingMark = element;
+      
+      // 获取当前暂停时长
+      const pauseDuration = element.getAttribute('data-pause');
+      document.getElementById('pauseDuration').value = pauseDuration;
+      updatePausePreview();
+      
+      // 显示弹窗
+      document.getElementById('pauseModal').style.display = 'block';
+    }
+    
+    // 应用暂停编辑
+    function applyPauseEdit() {
+      const duration = document.getElementById('pauseDuration').value;
+      
+      if (currentEditingMark) {
+        // 编辑现有标记
+        currentEditingMark.setAttribute('data-pause', duration);
+        currentEditingMark.textContent = `<#${duration}#>`;
+      } else {
+        // 创建新标记
+        insertPauseMark(duration);
+      }
+      
+      // 关闭弹窗
+      closePauseModal();
+    }
+    
+    // 关闭暂停编辑弹窗
+    function closePauseModal() {
+      document.getElementById('pauseModal').style.display = 'none';
+      currentEditingMark = null;
+    }
+    
+    // 清空编辑器
+    function clearEditor() {
+      if (confirm('确定要清空编辑器内容吗？')) {
+        document.getElementById('textEditor').innerHTML = '';
+      }
+    }
+    
+    // 清除日志
+    function clearLogs() {
+      const logs = document.getElementById('logs');
+      logs.innerHTML = '<div class="log-entry log-info">日志已清除...</div>';
+    }
+    
+    // 从编辑器获取纯文本（包括暂停标记）
+    function getTextFromEditor() {
+      const editor = document.getElementById('textEditor');
+      let result = '';
+      let nodes = editor.childNodes;
+      
+      for (let i = 0; i < nodes.length; i++) {
+        const node = nodes[i];
+        
+        if (node.nodeType === Node.TEXT_NODE) {
+          // 文本节点
+          result += node.textContent;
+        } else if (node.nodeType === Node.ELEMENT_NODE) {
+          // 元素节点
+          if (node.classList.contains('pause-mark')) {
+            // 暂停标记
+            const pauseDuration = node.getAttribute('data-pause');
+            result += `<#${pauseDuration}#>`;
+          } else {
+            // 其他元素（递归处理）
+            result += node.textContent;
+          }
+        }
+      }
+      
+      return result;
+    }
+    
+    // 测试所有代理
+    function testAllProxies() {
+      logMessage("开始测试所有代理...", "info");
+      
+      const proxies = [
+        { name: "无代理", url: "" },
+        { name: "corsproxy.io", url: "https://corsproxy.io/?" },
+        { name: "allorigins.win", url: "https://api.allorigins.win/raw?url=" },
+        { name: "thingproxy", url: "https://thingproxy.freeboard.io/fetch/" }
+      ];
+      
+      const apiKey = document.getElementById('apiKey').value;
+      const groupId = document.getElementById('groupId').value;
+      const apiEndpoint = document.getElementById('apiEndpoint').value;
+      
+      // 构建最小测试请求
+      const testData = {
+        model: "speech-02-turbo",
+        text: "测试",
+        stream: false,
+        voice_setting: {
+          voice_id: "male-qn-qingse",
+          speed: 1.0,
+          vol: 1.0,
+          pitch: 0,
+          emotion: "neutral"
+        },
+        audio_setting: {
+          sample_rate: 16000,
+          bitrate: 64000,
+          format: "mp3",
+          channel: 1
+        }
+      };
+      
+      let successfulProxies = [];
+      
+      // 如果是调试模式，模拟响应
+      if (debugMode) {
+        logMessage("调试模式：模拟代理测试结果", "info");
+        setTimeout(() => {
+          logMessage("模拟测试完成。所有代理均模拟成功", "success");
+          // 假装所有代理都成功
+          document.getElementById('proxies').value = "";
+          logMessage("已自动选择代理: 无代理", "info");
+        }, 1500);
+        return;
+      }
+      
+      for (const proxy of proxies) {
+        logMessage(`测试代理: ${proxy.name}`, "info");
+        
+        try {
+          const testUrl = `${proxy.url}${apiEndpoint}?GroupId=${groupId}`;
+          
+          // 使用同步XMLHttpRequest
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', testUrl, false);  // 同步请求
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+          
+          try {
+            xhr.send(JSON.stringify(testData));
+            
+            if (xhr.status >= 200 && xhr.status < 300) {
+              logMessage(`收到状态码: ${xhr.status}`, "debug");
+              
+              try {
+                const response = JSON.parse(xhr.responseText);
+                
+                if (response.base_resp && response.base_resp.status_code === 0 && 
+                    response.data && response.data.audio) {
+                  logMessage(`代理 ${proxy.name} 测试成功!`, "success");
+                  successfulProxies.push(proxy);
+                } else if (response.base_resp) {
+                  logMessage(`代理 ${proxy.name} 返回API错误: ${response.base_resp.status_msg || 'Unknown error'}`, "error");
+                } else {
+                  logMessage(`代理 ${proxy.name} 返回无效响应`, "error");
+                }
+              } catch (e) {
+                logMessage(`代理 ${proxy.name} JSON解析错误: ${e.message}`, "error");
+              }
+            } else {
+              logMessage(`代理 ${proxy.name} 返回HTTP错误: ${xhr.status}`, "error");
+            }
+          } catch (error) {
+            logMessage(`代理 ${proxy.name} 请求失败: ${error.message}`, "error");
+          }
+        } catch (error) {
+          logMessage(`代理 ${proxy.name} 测试异常: ${error.message}`, "error");
+        }
+      }
+      
+      if (successfulProxies.length > 0) {
+        logMessage(`测试完成。成功的代理: ${successfulProxies.map(p => p.name).join(', ')}`, "success");
+        
+        // 自动选择第一个成功的代理
+        const selectElement = document.getElementById('proxies');
+        selectElement.value = successfulProxies[0].url;
+        logMessage(`已自动选择代理: ${successfulProxies[0].name}`, "info");
+      } else {
+        logMessage("所有代理测试均失败", "error");
+      }
+    }
+    
+    // 生成语音 - 使用同步XMLHttpRequest
+    function generateSpeech() {
+      try {
+        // 获取文本内容
+        const text = getTextFromEditor();
+        if (!text) {
+          logMessage("请输入要转换为语音的文本", "error");
+          return;
+        }
+        
+        // 更新字符统计
+        usageStats.currentChars = text.length;
+        usageStats.totalChars += text.length;
+        saveStats();
+        updateStatsDisplay();
+        
+        // 获取设置
+        const apiKey = document.getElementById('apiKey').value;
+        const groupId = document.getElementById('groupId').value;
+        const apiEndpoint = document.getElementById('apiEndpoint').value;
+        const proxy = document.getElementById('proxies').value;
+        
+        // 获取语音参数
+        const model = document.getElementById('model').value;
+        const voiceId = document.getElementById('voiceId').value;
+        const emotion = currentEmotion;
+        const speed = parseFloat(document.getElementById('speed').value);
+        const volume = parseFloat(document.getElementById('volume').value);
+        const pitch = parseInt(document.getElementById('pitch').value);
+        
+        // 获取高级音频设置
+        const sampleRate = parseInt(document.getElementById('sampleRate').value);
+        const bitrate = parseInt(document.getElementById('bitrate').value);
+        const format = document.getElementById('format').value;
+        const language = document.getElementById('language').value;
+        
+        // 更新按钮状态
+        const generateBtn = document.getElementById('generateBtn');
+        const originalBtnText = generateBtn.textContent;
+        generateBtn.innerHTML = '<span class="spinner"></span>生成中...';
+        generateBtn.disabled = true;
+        
+        // 记录生成信息
+        logMessage(`开始生成语音，文本长度: ${text.length}字符`, "info");
+        logMessage(`使用模型: ${model}, 音色: ${voiceId}, 情感: ${currentEmotionDisplay}`, "info");
+        logMessage(`设置 - 语速: ${speed}, 音量: ${volume}, 音调: ${pitch}`, "debug");
+        logMessage(`设置 - 采样率: ${sampleRate}, 比特率: ${bitrate}, 格式: ${format}`, "debug");
+        
+        // 调试模式下模拟生成
+        if (debugMode) {
+          logMessage("调试模式：模拟语音生成...", "info");
+          
+          setTimeout(() => {
+            logMessage("模拟语音生成成功", "success");
+            
+            // 创建一个空音频
+            const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.value = 440; // A4 音符
+            gainNode.gain.value = 0.5;
+            
+            // 录制2秒音频
+            const duration = 2;
+            const recordingLength = duration * audioCtx.sampleRate;
+            const audioBuffer = audioCtx.createBuffer(1, recordingLength, audioCtx.sampleRate);
+            
+            // 模拟音频数据
+            const channelData = audioBuffer.getChannelData(0);
+            for (let i = 0; i < recordingLength; i++) {
+              channelData[i] = Math.sin(i * 0.01) * 0.5;
+            }
+            
+            // 将 AudioBuffer 转换为 Blob
+            const offlineCtx = new OfflineAudioContext(1, recordingLength, audioCtx.sampleRate);
+            const source = offlineCtx.createBufferSource();
+            source.buffer = audioBuffer;
+            source.connect(offlineCtx.destination);
+            source.start();
+            
+            offlineCtx.startRendering().then(renderedBuffer => {
+              const audioData = renderedBuffer.getChannelData(0);
+              const wavBlob = bufferToWave(renderedBuffer, 0, recordingLength);
+              
+              // 设置音频播放器
+              currentAudioBlob = wavBlob;
+              const audioUrl = URL.createObjectURL(wavBlob);
+              const audioPlayer = document.getElementById('audioPlayer');
+              audioPlayer.src = audioUrl;
+              document.getElementById('audioContainer').style.display = 'block';
+              audioPlayer.play();
+              
+              // 如果使用的是克隆音色，更新克隆音色的使用时间
+              if (isCustomVoice(voiceId)) {
+                updateCustomVoiceUsage(voiceId);
+              }
+              
+              generateBtn.textContent = originalBtnText;
+              generateBtn.disabled = false;
+            });
+          }, 1500);
+          
+          return;
+        }
+        
+        // 准备请求数据
+        const requestData = {
+          model: model,
+          text: text,
+          stream: false,  // 同步请求不支持流式
+          language_boost: language,
+          voice_setting: {
+            voice_id: voiceId,
+            speed: speed,
+            vol: volume,
+            pitch: pitch,
+            emotion: emotion
+          },
+          audio_setting: {
+            sample_rate: sampleRate,
+            bitrate: bitrate,
+            format: format,
+            channel: 1
+          }
+        };
+        
+        // 构建请求URL
+        const apiUrl = `${proxy}${apiEndpoint}?GroupId=${groupId}`;
+        
+        // 记录请求信息
+        logMessage("正在发送请求...", "info");
+        logMessage(`API URL: ${apiUrl}`, "debug");
+        logMessage("使用同步XMLHttpRequest (绕过CORS限制)", "debug");
+        
+        // 使用同步XMLHttpRequest发送请求
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', apiUrl, false);  // 同步请求
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+        
+        try {
+          xhr.send(JSON.stringify(requestData));
+          
+          if (xhr.status >= 200 && xhr.status < 300) {
+            logMessage(`请求成功，状态码: ${xhr.status}`, "success");
+            
+            // 解析响应
+            let response;
+            try {
+              response = JSON.parse(xhr.responseText);
+            } catch (e) {
+              throw new Error(`JSON解析错误: ${e.message}`);
+            }
+            
+            // 检查API响应
+            if (response.base_resp && response.base_resp.status_code !== 0) {
+              throw new Error(`API返回错误: ${response.base_resp.status_msg}`);
+            }
+            
+            if (!response.data || !response.data.audio) {
+              throw new Error("API响应中未找到音频数据");
+            }
+            
+            // 处理音频数据
+            const audioHex = response.data.audio;
+            logMessage(`接收到音频数据，长度: ${audioHex.length} 字符`, "debug");
+            
+            // 转换十六进制为ArrayBuffer
+            const audioBytes = hexToArrayBuffer(audioHex);
+            currentAudioBlob = new Blob([audioBytes], { type: `audio/${format}` });
+            const audioUrl = URL.createObjectURL(currentAudioBlob);
+            
+            // 设置音频播放器
+            const audioPlayer = document.getElementById('audioPlayer');
+            audioPlayer.src = audioUrl;
+            document.getElementById('audioContainer').style.display = 'block';
+            audioPlayer.play();
+            
+            // 如果使用的是克隆音色，更新克隆音色的使用时间
+            if (isCustomVoice(voiceId)) {
+              updateCustomVoiceUsage(voiceId);
+            }
+            
+            logMessage("语音生成成功!", "success");
+            
+            // 记录额外信息
+            if (response.extra_info) {
+              const audioLength = response.extra_info.audio_length / 1000;  // 毫秒转秒
+              const audioSize = Math.round(response.extra_info.audio_size / 1024);  // 字节转KB
+              logMessage(`音频信息：长度=${audioLength.toFixed(2)}秒，大小=${audioSize}KB`, "info");
+            }
+          } else {
+            const errorText = xhr.responseText || '无响应数据';
+            logMessage(`HTTP错误: ${xhr.status}`, "error");
+            logMessage(`错误响应: ${errorText.substring(0, 200)}`, "debug");
+            throw new Error(`HTTP错误: ${xhr.status}`);
+          }
+        } catch (error) {
+          throw error;
+        }
+        
+      } catch (error) {
+        logMessage(`错误: ${error.message}`, "error");
+        console.error(error);
+      } finally {
+        // 恢复按钮状态
+        const generateBtn = document.getElementById('generateBtn');
+        generateBtn.textContent = '生成语音';
+        generateBtn.disabled = false;
+      }
+    }
+    
+    // AudioBuffer 转 Wave Blob
+    function bufferToWave(buffer, start, end) {
+      const numOfChan = buffer.numberOfChannels;
+      const length = (end - start) * numOfChan * 2 + 44;
+      const data = new Uint8Array(length);
+      
+      // 写入 "RIFF" 头
+      writeString(data, 0, 'RIFF');
+      data[4] = (length & 0xff);
+      data[5] = ((length >> 8) & 0xff);
+      data[6] = ((length >> 16) & 0xff);
+      data[7] = ((length >> 24) & 0xff);
+      writeString(data, 8, 'WAVE');
+      writeString(data, 12, 'fmt ');
+      
+      // 写入格式子块
+      data[16] = 16; // 子块大小
+      data[17] = 0;
+      data[18] = 0;
+      data[19] = 0;
+      data[20] = 1; // PCM 格式
+      data[21] = 0;
+      data[22] = numOfChan;
+      data[23] = 0;
+      
+      // 采样率
+      const sampleRate = buffer.sampleRate;
+      data[24] = (sampleRate & 0xff);
+      data[25] = ((sampleRate >> 8) & 0xff);
+      data[26] = ((sampleRate >> 16) & 0xff);
+      data[27] = ((sampleRate >> 24) & 0xff);
+      
+      // 字节率
+      const byteRate = sampleRate * numOfChan * 2;
+      data[28] = (byteRate & 0xff);
+      data[29] = ((byteRate >> 8) & 0xff);
+      data[30] = ((byteRate >> 16) & 0xff);
+      data[31] = ((byteRate >> 24) & 0xff);
+      
+      // 块对齐
+      data[32] = numOfChan * 2;
+      data[33] = 0;
+      
+      // 位深度
+      data[34] = 16;
+      data[35] = 0;
+      
+      // 数据子块
+      writeString(data, 36, 'data');
+      const dataSize = (end - start) * numOfChan * 2;
+      data[40] = (dataSize & 0xff);
+      data[41] = ((dataSize >> 8) & 0xff);
+      data[42] = ((dataSize >> 16) & 0xff);
+      data[43] = ((dataSize >> 24) & 0xff);
+      
+      // 写入PCM样本
+      let offset = 44;
+      for (let i = 0; i < buffer.numberOfChannels; i++) {
+        const channelData = buffer.getChannelData(i);
+        for (let j = start; j < end; j++) {
+          const sample = Math.max(-1, Math.min(1, channelData[j]));
+          let value = (sample < 0 ? sample * 0x8000 : sample * 0x7FFF);
+          data[offset++] = value & 0xff;
+          data[offset++] = (value >> 8) & 0xff;
+        }
+      }
+      
+      return new Blob([data], { type: 'audio/wav' });
+    }
+    
+    // 辅助函数用于写入字符串
+    function writeString(data, offset, string) {
+      for (let i = 0; i < string.length; i++) {
+        data[offset + i] = string.charCodeAt(i);
+      }
+    }
+    
+    // 将十六进制字符串转换为ArrayBuffer
+    function hexToArrayBuffer(hexString) {
+      // 确保长度是偶数
+      if (hexString.length % 2 !== 0) {
+        hexString = '0' + hexString;
+      }
+      
+      const bytes = new Uint8Array(hexString.length / 2);
+      for (let i = 0; i < hexString.length; i += 2) {
+        bytes[i / 2] = parseInt(hexString.substring(i, i + 2), 16);
+      }
+      return bytes.buffer;
+    }
+    
+    // 下载音频
+    function downloadAudio() {
+      if (!currentAudioBlob) {
+        logMessage("没有可下载的音频", "error");
+        return;
+      }
+      
+      try {
+        const format = document.getElementById('format').value;
+        const url = URL.createObjectURL(currentAudioBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tts_${new Date().toISOString().replace(/[:.]/g, '-')}.${format}`;
+        document.body.appendChild(a);
+        a.click();
+        
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        logMessage(`音频下载已开始: ${a.download}`, "info");
+      } catch (error) {
+        logMessage(`下载音频时出错: ${error.message}`, "error");
+      }
+    }
+    
+    // 重复播放
+    function repeatPlayback() {
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.currentTime = 0;
+      audioPlayer.play();
+      logMessage("重新开始播放音频", "info");
+    }
+    
+    // 添加日志
+    function logMessage(message, type = "info") {
+      console.log(`[${type}] ${message}`);
+      
+      const timestamp = new Date().toLocaleTimeString();
+      const logs = document.getElementById('logs');
+      const entry = document.createElement('div');
+      entry.className = `log-entry log-${type}`;
+      entry.textContent = `[${timestamp}] ${message}`;
+      logs.appendChild(entry);
+      logs.scrollTop = logs.scrollHeight;
+    }
+    
+    // 打开音色克隆弹窗
+    function openCloneModal() {
+      // 重置表单
+      document.getElementById('customVoiceId').value = '';
+      document.getElementById('cloneAudioFile').value = '';
+      document.getElementById('cloneFileName').textContent = '未选择文件';
+      document.getElementById('promptAudioFile').value = '';
+      document.getElementById('promptFileName').textContent = '未选择文件';
+      document.getElementById('promptText').value = '';
+      document.getElementById('textValidation').value = '';
+      document.getElementById('noiseReduction').checked = false;
+      document.getElementById('volumeNormalization').checked = false;
+      document.getElementById('accuracy').value = 0.7;
+      document.getElementById('accuracyValue').textContent = '0.7';
+      document.getElementById('generateDemo').checked = true;
+      
+      // 重置ID验证
+      document.querySelectorAll('#idValidation .validation-item').forEach(item => {
+        item.classList.remove('pass', 'fail');
+      });
+      
+      // 显示弹窗
+      document.getElementById('cloneModal').style.display = 'block';
+    }
+    
+    // 关闭音色克隆弹窗
+    function closeCloneModal() {
+      document.getElementById('cloneModal').style.display = 'none';
+      
+      // 清除任何试听音频
+      if (demoAudioUrl) {
+        URL.revokeObjectURL(demoAudioUrl);
+        demoAudioUrl = null;
+      }
+      
+      // 移除试听音频容器
+      const demoContainer = document.querySelector('.demo-audio-container');
+      if (demoContainer) {
+        demoContainer.parentElement.removeChild(demoContainer);
+      }
+    }
+    
+    // 验证音色ID
+    function validateVoiceId() {
+      const voiceIdInput = document.getElementById('customVoiceId');
+      const voiceId = voiceIdInput.value;
+      
+      // 检查长度
+      const lengthValid = voiceId.length >= 8 && voiceId.length <= 256;
+      document.getElementById('validLength').className = 
+        `validation-item ${lengthValid ? 'pass' : 'fail'}`;
+      
+      // 检查首字符
+      const startValid = /^[a-zA-Z]/.test(voiceId);
+      document.getElementById('validStart').className = 
+        `validation-item ${startValid ? 'pass' : 'fail'}`;
+      
+      // 检查字符
+      const charsValid = /^[a-zA-Z0-9_\-]*$/.test(voiceId);
+      document.getElementById('validChars').className = 
+        `validation-item ${charsValid ? 'pass' : 'fail'}`;
+      
+      // 检查末尾字符
+      const endValid = !voiceId.endsWith('-') && !voiceId.endsWith('_');
+      document.getElementById('validEnd').className = 
+        `validation-item ${endValid ? 'pass' : 'fail'}`;
+      
+      return lengthValid && startValid && charsValid && endValid;
+    }
+    
+    // 检查是否是有效的音色ID
+    function isValidVoiceId(voiceId) {
+      // 必须以字母开头，长度8-256，仅允许数字、字母、-、_，末位不可为-、_
+      const regex = /^[a-zA-Z][a-zA-Z0-9_\-]{6,254}[a-zA-Z0-9]$/;
+      return regex.test(voiceId);
+    }
+    
+    // 验证音频文件
+    function validateAudioFile(inputElement, fileNameId, isPrompt = false) {
+      if (!inputElement.files || inputElement.files.length === 0) {
+        document.getElementById(fileNameId).textContent = '未选择文件';
+        return false;
+      }
+      
+      const file = inputElement.files[0];
+      document.getElementById(fileNameId).textContent = file.name;
+      
+      // 检查文件格式
+      const validFormats = ['audio/mp3', 'audio/mpeg', 'audio/wav', 'audio/x-m4a'];
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const validExt = ['mp3', 'wav', 'm4a'].includes(fileExt);
+      
+      // 检查文件大小
+      const maxSize = 20 * 1024 * 1024; // 20MB
+      const validSize = file.size <= maxSize;
+      
+      let errorMsg = '';
+      
+      if (!validExt && !validFormats.includes(file.type)) {
+        errorMsg = `不支持的文件格式: ${file.type || fileExt}。请使用 MP3、WAV 或 M4A 格式`;
+      } else if (!validSize) {
+        errorMsg = `文件过大: ${(file.size / (1024 * 1024)).toFixed(2)}MB。最大支持20MB`;
+      }
+      
+      if (errorMsg) {
+        const validationDiv = inputElement.parentElement.nextElementSibling;
+        if (validationDiv) {
+          validationDiv.textContent = errorMsg;
+          validationDiv.className = "validation-item fail";
+        }
+        return false;
+      }
+      
+      return true;
+    }
+    
+    // 模拟文件上传（用于调试模式）
+    function mockFileUpload(file, purpose) {
+      return new Promise((resolve, reject) => {
+        logMessage(`模拟上传文件: ${file.name}`, "info");
+        
+        // 模拟上传进度
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += 20;
+          logMessage(`模拟上传进度: ${progress}%`, "info");
+          
+          if (progress >= 100) {
+            clearInterval(interval);
+            
+            // 生成随机文件ID
+            const mockFileId = "file_" + Math.random().toString(36).substring(2, 15);
+            logMessage(`模拟上传成功，fileId: ${mockFileId}`, "success");
+            resolve(mockFileId);
+          }
+        }, 300);
+      });
+    }
+    
+    // 上传文件
+    async function uploadFile(file, purpose) {
+      // 在调试模式下使用模拟上传
+      if (debugMode) {
+        return mockFileUpload(file, purpose);
+      }
+      
+      try {
+        const apiKey = document.getElementById('apiKey').value;
+        const groupId = document.getElementById('groupId').value;
+        const proxy = document.getElementById('proxies').value;
+        
+        // 显示完整请求信息以便调试
+        logMessage(`上传详情: 文件大小=${file.size}字节, 类型=${file.type}, 用途=${purpose}`, "debug");
+        
+        // 构建FormData
+        const formData = new FormData();
+        formData.append('purpose', purpose);
+        formData.append('file', file);
+        
+        // 首先尝试直接连接
+        const baseUrl = 'https://api.minimax.chat/v1/files/upload';
+        const uploadUrl = proxy ? `${proxy}${baseUrl}` : baseUrl;
+        const fullUrl = `${uploadUrl}?GroupId=${groupId}`;
+        
+        logMessage(`尝试上传文件到: ${fullUrl}`, "info");
+        
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', fullUrl, true);
+          xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+          
+          // 添加超时处理
+          xhr.timeout = 30000; // 30秒超时
+          
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                logMessage(`上传响应: ${JSON.stringify(response)}`, "debug");
+                
+                if (response.file && response.file.file_id) {
+                  logMessage(`文件上传成功，获取到fileId: ${response.file.file_id}`, "success");
+                  resolve(response.file.file_id);
+                } else {
+                  logMessage(`无效的上传响应: ${xhr.responseText}`, "error");
+                  reject(new Error("上传响应中未找到file_id"));
+                }
+              } catch (e) {
+                logMessage(`JSON解析错误: ${e.message}, 原始响应: ${xhr.responseText}`, "error");
+                reject(new Error(`JSON解析错误: ${e.message}`));
+              }
+            } else {
+              let errorMessage = `HTTP错误: ${xhr.status}`;
+              try {
+                const errorResp = JSON.parse(xhr.responseText);
+                if (errorResp.base_resp && errorResp.base_resp.status_msg) {
+                  errorMessage += ` - ${errorResp.base_resp.status_msg}`;
+                }
+              } catch (e) {}
+              
+              logMessage(errorMessage, "error");
+              
+              // 如果当前使用代理失败，尝试不使用代理
+              if (proxy) {
+                logMessage("尝试不使用代理上传...", "info");
+                
+                const directXhr = new XMLHttpRequest();
+                const directUrl = `${baseUrl}?GroupId=${groupId}`;
+                
+                directXhr.open('POST', directUrl, true);
+                directXhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+                
+                directXhr.onload = function() {
+                  if (directXhr.status >= 200 && directXhr.status < 300) {
+                    try {
+                      const response = JSON.parse(directXhr.responseText);
+                      if (response.file && response.file.file_id) {
+                        logMessage(`直接上传成功，fileId: ${response.file.file_id}`, "success");
+                        resolve(response.file.file_id);
+                      } else {
+                        reject(new Error("直接上传响应中未找到file_id"));
+                      }
+                    } catch (e) {
+                      reject(new Error(`直接上传JSON解析错误: ${e.message}`));
+                    }
+                  } else {
+                    reject(new Error(`所有上传方式均失败，请检查API密钥和网络连接`));
+                  }
+                };
+                
+                directXhr.onerror = function() {
+                  reject(new Error("所有上传方式均失败，请检查网络连接"));
+                };
+                
+                directXhr.upload.onprogress = function(e) {
+                  if (e.lengthComputable) {
+                    const percent = Math.round((e.loaded / e.total) * 100);
+                    logMessage(`直接上传进度: ${percent}%`, "info");
+                  }
+                };
+                
+                directXhr.send(formData);
+              } else {
+                reject(new Error(errorMessage));
+              }
+            }
+          };
+          
+          xhr.onerror = function() {
+            logMessage("上传请求失败，网络错误", "error");
+            
+            if (!proxy) {
+              logMessage("尝试使用代理上传...", "info");
+              // 尝试使用代理
+              const availableProxies = [
+                "https://corsproxy.io/?",
+                "https://api.allorigins.win/raw?url=",
+                "https://thingproxy.freeboard.io/fetch/"
+              ];
+              
+              let proxyAttempts = 0;
+              tryNextProxy();
+              
+              function tryNextProxy() {
+                if (proxyAttempts >= availableProxies.length) {
+                  reject(new Error("所有代理尝试均失败"));
+                  return;
+                }
+                
+                const currentProxy = availableProxies[proxyAttempts++];
+                const proxyUrl = `${currentProxy}${baseUrl}?GroupId=${groupId}`;
+                
+                logMessage(`尝试使用代理: ${currentProxy}`, "info");
+                
+                const proxyXhr = new XMLHttpRequest();
+                proxyXhr.open('POST', proxyUrl, true);
+                proxyXhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+                
+                proxyXhr.onload = function() {
+                  if (proxyXhr.status >= 200 && proxyXhr.status < 300) {
+                    try {
+                      const response = JSON.parse(proxyXhr.responseText);
+                      if (response.file && response.file.file_id) {
+                        logMessage(`通过代理上传成功，fileId: ${response.file.file_id}`, "success");
+                        resolve(response.file.file_id);
+                      } else {
+                        tryNextProxy();
+                      }
+                    } catch (e) {
+                      tryNextProxy();
+                    }
+                  } else {
+                    tryNextProxy();
+                  }
+                };
+                
+                proxyXhr.onerror = tryNextProxy;
+                proxyXhr.send(formData);
+              }
+            } else {
+              reject(new Error("上传失败，网络错误"));
+            }
+          };
+          
+          xhr.ontimeout = function() {
+            logMessage("上传请求超时", "error");
+            reject(new Error("上传请求超时"));
+          };
+          
+          xhr.upload.onprogress = function(e) {
+            if (e.lengthComputable) {
+              const percent = Math.round((e.loaded / e.total) * 100);
+              logMessage(`上传进度: ${percent}%`, "info");
+            }
+          };
+          
+          // 发送请求
+          xhr.send(formData);
+        });
+      } catch (error) {
+        logMessage(`文件上传准备错误: ${error.message}`, "error");
+        throw error;
+      }
+    }
+    
+    // 修复：克隆按钮卡住问题的新版开始音色克隆函数
+    function startVoiceClone() {
+      // 先获取按钮引用并显示加载状态
+      const cloneBtn = document.getElementById('startCloneBtn');
+      const originalBtnText = cloneBtn.innerHTML;
+      
+      // 显示加载状态
+      cloneBtn.innerHTML = '<span class="spinner"></span>克隆中...';
+      cloneBtn.disabled = true;
+      
+      // 记录日志
+      logMessage("开始音色克隆过程...", "info");
+      
+      // 获取必要的输入值
+      const customVoiceId = document.getElementById('customVoiceId').value.trim();
+      
+      // 基本验证 - 为了确保函数能快速结束
+      if (!customVoiceId) {
+        logMessage("请输入自定义音色ID", "error");
+        cloneBtn.innerHTML = originalBtnText;
+        cloneBtn.disabled = false;
+        return;
+      }
+      
+      // 确保有文件被选择
+      const cloneFileInput = document.getElementById('cloneAudioFile');
+      if (!cloneFileInput.files || cloneFileInput.files.length === 0) {
+        logMessage("请选择音频文件", "error");
+        cloneBtn.innerHTML = originalBtnText;
+        cloneBtn.disabled = false;
+        return;
+      }
+      
+      // 使用超时机制确保按钮不会永久卡住
+      const timeout = setTimeout(() => {
+        if (cloneBtn.disabled) {
+          logMessage("克隆操作超时，请检查网络连接后重试", "warning");
+          cloneBtn.innerHTML = originalBtnText;
+          cloneBtn.disabled = false;
+        }
+      }, 30000); // 30秒超时
+      
+      // 使用 setTimeout 来确保 UI 更新
+      setTimeout(() => {
+        performVoiceClone(customVoiceId, cloneFileInput.files[0])
+          .then(() => {
+            // 成功处理
+            clearTimeout(timeout); // 清除超时
+            logMessage("音色克隆处理完成", "success");
+          })
+          .catch(error => {
+            // 错误处理
+            clearTimeout(timeout); // 清除超时
+            logMessage(`音色克隆失败: ${error.message}`, "error");
+            console.error('克隆错误详情:', error);
+          })
+          .finally(() => {
+            // 无论成功失败，确保按钮恢复
+            cloneBtn.innerHTML = originalBtnText;
+            cloneBtn.disabled = false;
+          });
+      }, 100);
+    }
+
+    // 实际执行克隆操作的函数
+    async function performVoiceClone(voiceId, audioFile) {
+      // 记录开始操作
+      logMessage(`准备克隆音色, ID: ${voiceId}`, "info");
+      
+      // 在调试模式下使用模拟数据
+      if (debugMode) {
+        // 模拟克隆过程
+        logMessage("调试模式：模拟音色克隆...", "info");
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        logMessage("模拟音色克隆成功", "success");
+        addCustomVoice(voiceId);
+        
+        // 关闭弹窗并切换到音色列表标签页
+        closeCloneModal();
+        document.querySelector('.tab[data-tab="voice-clone"]').click();
+        
+        return true;
+      }
+      
+      try {
+        // 验证音色ID
+        if (!validateVoiceId()) {
+          throw new Error("无效的音色ID格式");
+        }
+        
+        // 验证音频文件
+        if (!validateAudioFile(document.getElementById('cloneAudioFile'), 'cloneFileName')) {
+          throw new Error("音频文件验证失败");
+        }
+        
+        // 获取其他参数
+        const promptFile = document.getElementById('promptAudioFile').files[0];
+        const promptText = document.getElementById('promptText').value.trim();
+        const textValidation = document.getElementById('textValidation').value.trim();
+        const noiseReduction = document.getElementById('noiseReduction').checked;
+        const volumeNormalization = document.getElementById('volumeNormalization').checked;
+        const accuracy = parseFloat(document.getElementById('accuracy').value);
+        const generateDemo = document.getElementById('generateDemo').checked;
+        
+        // 示例音频验证
+        if (promptFile && !promptText) {
+          throw new Error("如果提供示例音频，则必须填写示例音频对应文本");
+        }
+        
+        if (promptFile && !validateAudioFile(document.getElementById('promptAudioFile'), 'promptFileName', true)) {
+          throw new Error("示例音频文件验证失败");
+        }
+        
+        // 获取API信息
+        const apiKey = document.getElementById('apiKey').value;
+        const groupId = document.getElementById('groupId').value;
+        const proxy = document.getElementById('proxies').value;
+        
+        // 上传主音频文件
+        logMessage("开始上传主音频文件...", "info");
+        const fileId = await uploadFile(audioFile, 'voice_clone');
+        logMessage(`主音频上传成功, fileId: ${fileId}`, "success");
+        
+        // 准备请求数据
+        const requestData = {
+          file_id: fileId,
+          voice_id: voiceId,
+          accuracy: accuracy,
+          need_noise_reduction: noiseReduction,
+          need_volume_normalization: volumeNormalization
+        };
+        
+        // 添加文本验证
+        if (textValidation) {
+          requestData.text_validation = textValidation;
+        }
+        
+        // 上传示例音频（如果有）
+        if (promptFile && promptText) {
+          logMessage("上传示例音频文件...", "info");
+          const promptFileId = await uploadFile(promptFile, 'prompt_audio');
+          logMessage(`示例音频上传成功, fileId: ${promptFileId}`, "success");
+          
+          requestData.clone_prompt = {
+            prompt_audio: promptFileId,
+            prompt_text: promptText
+          };
+        }
+        
+        // 添加试听功能（如果勾选）
+        if (generateDemo) {
+          requestData.text = "这是一段使用克隆音色的试听音频";
+          requestData.model = "speech-02-turbo";
+        }
+        
+        // 发送克隆请求
+        logMessage("发送音色克隆请求...", "info");
+        
+        const baseUrl = 'https://api.minimax.chat/v1/voice_clone';
+        const cloneUrl = proxy ? `${proxy}${baseUrl}` : baseUrl;
+        const fullUrl = `${cloneUrl}?GroupId=${groupId}`;
+        
+        // 使用Promise包装XMLHttpRequest以便更好地处理错误
+        return new Promise((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          xhr.open('POST', fullUrl, true);
+          xhr.setRequestHeader('Content-Type', 'application/json');
+          xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+          
+          xhr.onload = function() {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                
+                if (response.base_resp && response.base_resp.status_code === 0) {
+                  logMessage(`音色克隆成功: ${voiceId}`, "success");
+                  
+                  // 处理试听音频（如果有）
+                  if (response.demo_audio) {
+                    logMessage(`生成了试听音频: ${response.demo_audio}`, "success");
+                    
+                    // 显示试听音频
+                    const modalContent = document.querySelector('.clone-modal');
+                    
+                    // 移除旧的试听容器（如果有）
+                    const oldContainer = document.querySelector('.demo-audio-container');
+                    if (oldContainer) {
+                      oldContainer.parentElement.removeChild(oldContainer);
+                    }
+                    
+                    // 创建新的试听容器
+                    const demoContainer = document.createElement('div');
+                    demoContainer.className = 'demo-audio-container';
+                    demoContainer.innerHTML = `
+                      <h4>试听音频</h4>
+                      <audio controls src="${response.demo_audio}" autoplay></audio>
+                      <p>此为系统生成的试听音频，可以帮助您评估克隆音色的效果。</p>
+                    `;
+                    
+                    modalContent.appendChild(demoContainer);
+                    
+                    // 保存URL以便后续清理
+                    demoAudioUrl = response.demo_audio;
+                  }
+                  
+                  // 添加到自定义音色列表
+                  addCustomVoice(voiceId);
+                  
+                  // 切换到音色列表标签页
+                  setTimeout(() => {
+                    closeCloneModal();
+                    document.querySelector('.tab[data-tab="voice-clone"]').click();
+                  }, 2000);
+                  
+                  resolve();
+                } else {
+                  const errorMsg = response.base_resp?.status_msg || "未知错误";
+                  const errorCode = response.base_resp?.status_code || "未知错误码";
+                  reject(new Error(`API错误 (${errorCode}): ${errorMsg}`));
+                }
+              } catch (e) {
+                reject(new Error(`解析响应失败: ${e.message}`));
+              }
+            } else {
+              let errorMessage = `HTTP错误: ${xhr.status}`;
+              try {
+                const errorResponse = JSON.parse(xhr.responseText);
+                if (errorResponse.base_resp && errorResponse.base_resp.status_msg) {
+                  errorMessage += ` - ${errorResponse.base_resp.status_msg}`;
+                }
+              } catch (e) {}
+              reject(new Error(errorMessage));
+            }
+          };
+          
+          xhr.onerror = function() {
+            reject(new Error("网络错误，请求失败"));
+          };
+          
+          xhr.ontimeout = function() {
+            reject(new Error("请求超时"));
+          };
+          
+          // 设置超时时间
+          xhr.timeout = 20000; // 20秒
+          
+          // 发送请求
+          xhr.send(JSON.stringify(requestData));
+        });
+        
+      } catch (error) {
+        // 捕获并重新抛出所有错误，确保它们被上层函数处理
+        logMessage(`音色克隆过程发生错误: ${error.message}`, "error");
+        throw error;
+      }
+    }
+    
+    // 添加自定义音色
+    function addCustomVoice(voiceId) {
+      // 创建新的自定义音色对象
+      const newVoice = {
+        id: voiceId,
+        createdAt: new Date().toISOString(),
+        lastUsed: new Date().toISOString()
+      };
+      
+      // 检查是否已存在
+      const existingIndex = customVoices.findIndex(v => v.id === voiceId);
+      if (existingIndex >= 0) {
+        customVoices[existingIndex].lastUsed = newVoice.lastUsed;
+      } else {
+        // 添加到列表
+        customVoices.push(newVoice);
+        
+        // 添加到下拉菜单
+        addVoiceToDropdown(newVoice);
+      }
+      
+      // 保存到存储
+      saveCustomVoices();
+      
+      // 更新自定义音色列表显示
+      updateCustomVoiceListUI();
+    }
+    
+    // 添加音色到下拉菜单
+    function addVoiceToDropdown(voice) {
+      const dropdown = document.getElementById('voiceId');
+      
+      // 检查是否已存在
+      for (let i = 0; i < dropdown.options.length; i++) {
+        if (dropdown.options[i].value === voice.id) {
+          return; // 已存在，不重复添加
+        }
+      }
+      
+      // 创建新选项
+      const option = document.createElement('option');
+      option.value = voice.id;
+      option.textContent = `${voice.id}（克隆音色）`;
+      option.classList.add('custom-voice-option');
+      
+      // 添加到下拉菜单
+      dropdown.appendChild(option);
+    }
+    
+    // 更新自定义音色使用时间
+    function updateCustomVoiceUsage(voiceId) {
+      const voiceIndex = customVoices.findIndex(v => v.id === voiceId);
+      if (voiceIndex !== -1) {
+        customVoices[voiceIndex].lastUsed = new Date().toISOString();
+        saveCustomVoices();
+        updateCustomVoiceListUI();
+        logMessage(`更新了音色 ${voiceId} 的使用时间，此音色已永久保存`, "info");
+      }
+    }
+    
+    // 检查是否是自定义音色
+    function isCustomVoice(voiceId) {
+      return customVoices.some(v => v.id === voiceId);
+    }
+    
+    // 保存自定义音色列表
+    function saveCustomVoices() {
+      try {
+        storage.setItem('minimax_custom_voices', JSON.stringify(customVoices));
+      } catch (error) {
+        console.error("保存自定义音色失败:", error);
+      }
+    }
+    
+    // 加载自定义音色列表
+    function loadCustomVoices() {
+      try {
+        const savedVoices = storage.getItem('minimax_custom_voices');
+        if (savedVoices) {
+          customVoices = JSON.parse(savedVoices);
+          
+          // 添加到下拉菜单
+          customVoices.forEach(voice => {
+            addVoiceToDropdown(voice);
+          });
+          
+          // 更新自定义音色列表显示
+          updateCustomVoiceListUI();
+        }
+      } catch (error) {
+        console.error("加载自定义音色失败:", error);
+        customVoices = [];
+      }
+    }
+    
+    // 永久保存音色（自动生成一个简短的语音）
+    async function permanentlySaveVoice(voiceId) {
+      try {
+        // 显示加载状态
+        logMessage(`正在永久保存音色: ${voiceId}...`, "info");
+        
+        // 调试模式下模拟保存
+        if (debugMode) {
+          setTimeout(() => {
+            updateCustomVoiceUsage(voiceId);
+            logMessage(`模拟保存：音色 ${voiceId} 已成功永久保存！`, "success");
+          }, 1000);
+          return;
+        }
+        
+        // 获取API信息
+        const apiKey = document.getElementById('apiKey').value;
+        const groupId = document.getElementById('groupId').value;
+        const apiEndpoint = document.getElementById('apiEndpoint').value;
+        const proxy = document.getElementById('proxies').value;
+        
+        // 准备简短的测试请求
+        const requestData = {
+          model: "speech-02-turbo", // 使用高速版以节省费用
+          text: "测试音色永久保存", // 简短文本
+          stream: false,
+          voice_setting: {
+            voice_id: voiceId,
+            speed: 1.0,
+            vol: 1.0,
+            pitch: 0,
+            emotion: "neutral"
+          },
+          audio_setting: {
+            sample_rate: 16000,
+            bitrate: 64000,
+            format: "mp3",
+            channel: 1
+          }
+        };
+        
+        // 构建请求URL
+        const baseUrl = apiEndpoint;
+        const apiUrl = proxy ? `${proxy}${baseUrl}` : baseUrl;
+        const fullUrl = `${apiUrl}?GroupId=${groupId}`;
+        
+        // 发送请求
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', fullUrl, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Authorization', `Bearer ${apiKey}`);
+        
+        xhr.onload = function() {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              const response = JSON.parse(xhr.responseText);
+              
+              if (response.base_resp && response.base_resp.status_code === 0) {
+                // 更新音色使用状态
+                updateCustomVoiceUsage(voiceId);
+                logMessage(`音色 ${voiceId} 已成功永久保存！`, "success");
+              } else {
+                logMessage(`永久保存失败: ${response.base_resp?.status_msg || "未知错误"}`, "error");
+              }
+            } catch (e) {
+              logMessage(`解析响应失败: ${e.message}`, "error");
+            }
+          } else {
+            logMessage(`HTTP错误: ${xhr.status}`, "error");
+          }
+        };
+        
+        xhr.onerror = function() {
+          logMessage("请求失败，网络错误", "error");
+        };
+        
+        xhr.send(JSON.stringify(requestData));
+        
+      } catch (error) {
+        logMessage(`永久保存音色失败: ${error.message}`, "error");
+      }
+    }
+    
+    // 更新自定义音色列表UI
+    function updateCustomVoiceListUI() {
+      const listContainer = document.getElementById('customVoiceList');
+      
+      // 清空列表
+      listContainer.innerHTML = '';
+      
+      if (customVoices.length === 0) {
+        listContainer.innerHTML = '<div class="log-entry log-info">暂无克隆音色，请点击"创建新音色"按钮创建。</div>';
+        return;
+      }
+      
+      // 按最后使用时间排序（最新的在前面）
+      const sortedVoices = [...customVoices].sort((a, b) => 
+        new Date(b.lastUsed) - new Date(a.lastUsed)
+      );
+      
+      // 添加每个音色项
+      sortedVoices.forEach(voice => {
+        const voiceItem = document.createElement('div');
+        voiceItem.className = 'custom-voice-item';
+        
+        // 计算过期时间（7天后）
+        const createdDate = new Date(voice.createdAt);
+        const expireDate = new Date(createdDate);
+        expireDate.setDate(expireDate.getDate() + 7);
+        
+        // 检查是否已使用（永久保存）
+        const lastUsedDate = new Date(voice.lastUsed);
+        const isUsed = lastUsedDate > createdDate;
+        
+        // 检查是否过期
+        const now = new Date();
+        const isExpired = !isUsed && now > expireDate;
+        
+        // 创建元素
+        const nameEl = document.createElement('div');
+        nameEl.className = 'custom-voice-name';
+        nameEl.textContent = voice.id;
+        
+        const dateEl = document.createElement('div');
+        dateEl.className = 'custom-voice-date';
+        
+        if (isUsed) {
+          dateEl.textContent = `已永久保存，最后使用: ${formatDate(lastUsedDate)}`;
+        } else if (isExpired) {
+          dateEl.textContent = `已过期，创建于: ${formatDate(createdDate)}`;
+          dateEl.style.color = '#dc3545';
+        } else {
+          const daysLeft = Math.ceil((expireDate - now) / (1000 * 60 * 60 * 24));
+          dateEl.textContent = `将在${daysLeft}天后过期，创建于: ${formatDate(createdDate)}`;
+          dateEl.style.color = '#ffc107';
+        }
+        
+        const controlsEl = document.createElement('div');
+        controlsEl.className = 'custom-voice-controls';
+        
+        const useBtn = document.createElement('button');
+        useBtn.className = 'success-btn';
+        useBtn.textContent = '使用';
+        useBtn.onclick = function() {
+          // 选中该音色
+          document.getElementById('voiceId').value = voice.id;
+          // 切换到主界面
+          document.querySelector('.tab[data-tab="main"]').click();
+          logMessage(`已选择克隆音色: ${voice.id}`, "info");
+        };
+        
+        // 添加永久保存按钮（如果未过期且未永久保存）
+        if (!isUsed && !isExpired) {
+          const saveBtn = document.createElement('button');
+          saveBtn.className = 'save-btn';
+          saveBtn.textContent = '永久保存';
+          saveBtn.onclick = function(event) {
+            event.stopPropagation(); // 防止冒泡
+            permanentlySaveVoice(voice.id);
+          };
+          controlsEl.appendChild(saveBtn);
+        }
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'danger-btn';
+        deleteBtn.textContent = '删除';
+        deleteBtn.onclick = function() {
+          deleteCustomVoice(voice.id);
+        };
+        
+        // 组装元素
+        controlsEl.appendChild(useBtn);
+        controlsEl.appendChild(deleteBtn);
+        
+        voiceItem.appendChild(nameEl);
+        voiceItem.appendChild(dateEl);
+        voiceItem.appendChild(controlsEl);
+        
+        // 如果已过期，添加样式
+        if (isExpired) {
+          voiceItem.style.opacity = '0.6';
+        }
+        
+        listContainer.appendChild(voiceItem);
+      });
+    }
+    
+    // 删除自定义音色
+    function deleteCustomVoice(voiceId) {
+      if (confirm(`确定要删除音色"${voiceId}"吗？此操作无法撤销。`)) {
+        // 从列表中删除
+        customVoices = customVoices.filter(voice => voice.id !== voiceId);
+        
+        // 从下拉菜单中删除
+        const dropdown = document.getElementById('voiceId');
+        const options = dropdown.querySelectorAll('option');
+        
+        for (let i = 0; i < options.length; i++) {
+          if (options[i].value === voiceId) {
+            dropdown.removeChild(options[i]);
+            break;
+          }
+        }
+        
+        // 保存并更新UI
+        saveCustomVoices();
+        updateCustomVoiceListUI();
+        
+        logMessage(`已删除音色: ${voiceId}`, "info");
+      }
+    }
+    
+    // 格式化日期
+    function formatDate(date) {
+      return date.toLocaleString('zh-CN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+    }
+  </script>
+</body>
+</html>
